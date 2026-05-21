@@ -1,0 +1,6 @@
+---
+- name: Test WikiJS pod Role
+  hosts: pods
+  gather_facts: true
+  roles:
+    - wikijs_pod

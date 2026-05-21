@@ -1,0 +1,6 @@
+---
+- name: Test HAProxy Role
+  hosts: proxy
+  gather_facts: true
+  roles:
+    - haproxy

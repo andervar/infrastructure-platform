@@ -1,0 +1,6 @@
+---
+- name: Test Redis Role
+  hosts: redis
+  gather_facts: true
+  roles:
+    - redis

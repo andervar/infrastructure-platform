@@ -1,0 +1,6 @@
+---
+- name: Test GLPI pod Role
+  hosts: pods
+  gather_facts: true
+  roles:
+    - glpi_pod

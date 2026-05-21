@@ -1,0 +1,6 @@
+---
+- name: Test Podman Base Role
+  hosts: pods
+  gather_facts: true
+  roles:
+    - podman_base

@@ -1,0 +1,6 @@
+---
+- name: Test Common Role
+  hosts: all
+  gather_facts: true
+  roles:
+    - common

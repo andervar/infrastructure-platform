@@ -1,0 +1,42 @@
+---
+- name: Common base configuration
+  hosts: all
+  gather_facts: true
+  roles:
+    - common
+  tags: [common]
+
+- name: Redis configuration
+  hosts: cache
+  gather_facts: false
+  roles:
+    - redis
+  tags: [redis]
+
+- name: HAProxy configuration
+  hosts: proxy_hosts
+  gather_facts: false
+  roles:
+    - haproxy
+  tags: [haproxy, proxy]
+
+- name: Podman base configuration
+  hosts: container_hosts
+  gather_facts: false
+  roles:
+    - podman_base
+  tags: [podman, containers]
+
+- name: GLPI container configuration
+  hosts: container_hosts
+  gather_facts: false
+  roles:
+    - glpi_pod
+  tags: [glpi, containers]
+
+- name: WikiJS container configuration
+  hosts: container_hosts
+  gather_facts: false
+  roles:
+    - wikijs_pod
+  tags: [wikijs, containers]

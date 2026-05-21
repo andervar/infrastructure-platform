@@ -1,0 +1,11 @@
+---
+- name: Ensure /etc/hosts entries are present (only on nat)
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "{{ item.ip }} {{ item.name }}"
+    regexp: "^{{ item.ip }}\\s+{{ item.name }}$"
+    state: present
+  loop: "{{ hosts_entries }}"
+  when: 
+    - hosts_entries is defined
+    - inventory_hostname == 'nat'

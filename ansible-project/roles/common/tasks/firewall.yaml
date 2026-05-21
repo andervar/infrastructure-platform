@@ -1,0 +1,70 @@
+---
+- name: Ensure firewalld installed
+  ansible.builtin.dnf:
+    name: firewalld
+    state: present
+
+- name: Ensure firewalld is started and enabled
+  ansible.builtin.systemd:
+    name: firewalld
+    state: started
+    enabled: true
+
+- name: Ensure custom zones exist
+  ansible.posix.firewalld:
+    zone: "{{ item.key }}"
+    state: present
+    permanent: true
+  loop: "{{ firewall_zones | dict2items }}"
+  notify: reload firewalld
+
+- name: Flush handlers to apply new zones immediately
+  meta: flush_handlers
+
+- name: Assign interfaces to zones
+  ansible.posix.firewalld:
+    zone: "{{ item.key }}"
+    interface: "{{ item.value.interface }}"
+    permanent: true
+    state: enabled
+  loop: "{{ firewall_zones | dict2items }}"
+  notify: reload firewalld
+
+- name: Configure services by zone
+  ansible.posix.firewalld:
+    zone: "{{ item.0.key }}"
+    service: "{{ item.1 }}"
+    permanent: true
+    state: enabled
+  loop: "{{ firewall_zones | dict2items | subelements('value.services', skip_missing=True) }}"
+  notify: reload firewalld
+
+- name: Configure ports by zone
+  ansible.posix.firewalld:
+    zone: "{{ item.0.key }}"
+    port: "{{ item.1 }}"
+    permanent: true
+    state: enabled
+  loop: "{{ firewall_zones | dict2items | subelements('value.ports', skip_missing=True) }}"
+  notify: reload firewalld
+
+- name: Configure masquerade by zone
+  ansible.posix.firewalld:
+    zone: "{{ item.key }}"
+    masquerade: true
+    permanent: true
+    state: enabled
+  loop: "{{ firewall_zones | dict2items }}"
+  when:
+    - item.value.masquerade is defined
+    - item.value.masquerade
+  notify: reload firewalld
+
+- name: Configure rich rules by zone
+  ansible.posix.firewalld:
+    zone: "{{ item.0.key }}"
+    rich_rule: "{{ item.1 }}"
+    permanent: true
+    state: enabled
+  loop: "{{ firewall_zones | dict2items | subelements('value.rich_rules', skip_missing=True) }}"
+  notify: reload firewalld

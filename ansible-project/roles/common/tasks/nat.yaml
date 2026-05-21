@@ -1,0 +1,60 @@
+---
+- name: Activate IP forwarding
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    sysctl_set: true
+    state: present
+    reload: true
+  when:
+    - ip_forward is defined
+    - ip_forward
+
+- name: Verify if the NAT policy already exists
+  ansible.builtin.command:
+    cmd: firewall-cmd --permanent --info-policy={{ nat_policy.name }}
+  register: nat_policy_check
+  failed_when: false
+  changed_when: false
+  when: nat_policy is defined
+
+- name: Create NAT policy
+  ansible.builtin.command:
+    cmd: firewall-cmd --permanent --new-policy={{ nat_policy.name }}
+  when:
+    - nat_policy is defined
+    - nat_policy_check.rc != 0
+  notify: reload firewalld
+
+- name: Configure NAT policy target
+  ansible.builtin.command:
+    cmd: firewall-cmd --permanent --policy={{ nat_policy.name }} --set-target={{ nat_policy.target }}
+  when:
+    - nat_policy is defined
+    - nat_policy_check.rc != 0
+  notify: reload firewalld
+
+- name: Add masquerade to NAT policy
+  ansible.builtin.command:
+    cmd: firewall-cmd --permanent --policy={{ nat_policy.name }} --add-masquerade
+  when:
+    - nat_policy is defined
+    - nat_policy.masquerade
+    - nat_policy_check.rc != 0
+  notify: reload firewalld
+
+- name: Configure ingress zone for NAT policy
+  ansible.builtin.command:
+    cmd: firewall-cmd --permanent --policy={{ nat_policy.name }} --add-ingress-zone={{ nat_policy.ingress_zone }}
+  when:
+    - nat_policy is defined
+    - nat_policy_check.rc != 0
+  notify: reload firewalld
+
+- name: Configure egress zone for NAT policy
+  ansible.builtin.command:
+    cmd: firewall-cmd --permanent --policy={{ nat_policy.name }} --add-egress-zone={{ nat_policy.egress_zone }}
+  when:
+    - nat_policy is defined
+    - nat_policy_check.rc != 0
+  notify: reload firewalld

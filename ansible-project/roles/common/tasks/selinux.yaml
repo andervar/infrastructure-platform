@@ -1,0 +1,22 @@
+---
+- name: Enforce SELinux in enforcing mode
+  ansible.posix.selinux:
+    policy: targeted
+    state: enforcing
+  register: selinux_result
+
+- name: Reboot if SELinux changed from permissive to enforcing
+  ansible.builtin.reboot:
+    msg: "Reboot required to apply SELinux enforcing"
+    reboot_timeout: 300
+  when:
+    - selinux_result.reboot_required | default(false)
+
+- name: Verify SELinux status
+  ansible.builtin.command: getenforce
+  register: selinux_status
+  changed_when: false
+
+- name: Display SELinux status
+  ansible.builtin.debug:
+    msg: "SELinux on {{ inventory_hostname }}: {{ selinux_status.stdout }}"

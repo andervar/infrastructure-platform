@@ -1,0 +1,23 @@
+---
+- name: Configuration of SELinux
+  ansible.builtin.import_tasks: selinux.yaml
+  tags: [common, selinux]
+
+- name: Configuration of timezone
+  ansible.builtin.import_tasks: timezone.yaml
+  tags: [common, timezone]
+
+- name: Management of /etc/hosts
+  ansible.builtin.import_tasks: hosts.yaml
+  when: hosts_entries is defined
+  tags: [common, hosts]
+
+- name: Configuration of firewall
+  ansible.builtin.import_tasks: firewall.yaml
+  tags: [common, firewall]
+
+- name: Configuration of NAT and IP forwarding
+  ansible.builtin.import_tasks: nat.yaml
+  when:
+    - nat_policy is defined or ip_forward is defined
+  tags: [common, nat]

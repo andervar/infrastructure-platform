@@ -1,0 +1,128 @@
+---
+# Network interfaces
+proxy_interfaces:
+  public:
+    interface: ens256
+    ip: "172.24.133.218"
+    netmask: "24"
+    gateway: "172.24.133.1"
+    zone: public
+
+  internal:
+    interface: ens160
+    ip: "192.168.216.4"
+    netmask: "24"
+    zone: internal
+
+  application:
+    interface: ens224
+    ip: "192.168.218.1"
+    netmask: "24"
+    zone: application
+
+# Firewall zones
+firewall_zones:
+  public:
+    interface: "{{ proxy_interfaces.public.interface }}"
+    services: ["https"]
+    ports: ["8443/tcp"]
+    masquerade: false
+
+  internal:
+    interface: "{{ proxy_interfaces.internal.interface }}"
+    services: ["ssh"]
+    masquerade: false
+
+  application:
+    interface: "{{ proxy_interfaces.application.interface }}"
+    services: []
+    masquerade: false
+    rich_rules:
+      - 'rule family="ipv4" destination address="{{ backend_servers.glpi.address }}" port port="{{ backend_servers.glpi.port }}" protocol="tcp" accept'
+      - 'rule family="ipv4" destination address="{{ backend_servers.wikijs.address }}" port port="{{ backend_servers.wikijs.port }}" protocol="tcp" accept'
+
+# Backend servers
+backend_servers:
+  glpi:
+    address: "192.168.218.2"
+    port: "8080"
+  wikijs:
+    address: "192.168.218.2"
+    port: "3000"
+
+# SSL certificate generation parameters
+haproxy_ssl:
+  key_path: "/etc/ssl/private/glpi_proxy.key"
+  crt_path: "/etc/ssl/certs/glpi_proxy.crt"
+  cert_path: "/etc/ssl/private/glpi_proxy.pem"
+
+  country: "CR"
+  state: "SanJose"
+  city: "SanJose"
+  org: "Universidad de Costa Rica"
+  ou: "Infrastructure"
+  email: "infra@ucr.ac.cr"
+  cn: "{{ proxy_interfaces.public.ip }}"
+  san_ips:
+    - "{{ proxy_interfaces.public.ip }}"
+  san_dns:
+    - "glpi.local"
+    - "wiki.local"
+  days: 365
+  key_size: 2048
+
+# HAProxy
+haproxy:
+  ssl_cert_path: "{{ haproxy_ssl.cert_path }}"
+
+  global:
+    maxconn: 4000
+    user: "haproxy"
+    group: "haproxy"
+    ca_base: "/etc/ssl/certs"
+    crt_base: "/etc/ssl/private"
+
+  defaults:
+    mode: "http"
+    timeout_connect: "5s"
+    timeout_client: "50s"
+    timeout_server: "50s"
+
+  frontends:
+    http:
+      bind: ":80"
+      redirect_https: true
+
+    https-in:
+      bind: ":443"
+      domains:
+        glpi: "glpi.local"
+        wikijs: "wiki.local"
+      default_backend: glpi
+    
+    wikijs-https-in:
+      bind: ":8443"
+      default_backend: wikijs
+
+  backends:
+    glpi:
+      health_check_path: "/"
+      health_check_status: 200
+      servers:
+        glpi-pods:
+          address: "{{ backend_servers.glpi.address }}"
+          port: "{{ backend_servers.glpi.port }}"
+          check_interval: "10s"
+          fall: 3
+          rise: 2
+
+    wikijs:
+      health_check_path: "/"
+      health_check_status: 200
+      servers:
+        wikijs-pods:
+          address: "{{ backend_servers.wikijs.address }}"
+          port: "{{ backend_servers.wikijs.port }}"
+          check_interval: "10s"
+          fall: 3
+          rise: 2

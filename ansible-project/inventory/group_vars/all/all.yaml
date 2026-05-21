@@ -1,0 +1,11 @@
+# Common SSH settings
+ansible_user: ansible
+ansible_python_interpreter: /usr/bin/python3
+
+# DNS settings
+dns_servers:
+  - 163.178.88.2
+  - 163.178.88.4
+
+# Public Network Gateway
+public_network_gateway: "172.24.133.1"

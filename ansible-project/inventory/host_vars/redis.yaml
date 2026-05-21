@@ -1,0 +1,68 @@
+---
+# Network interfaces configuration
+redis_interfaces:
+  internal:
+    interface: ens160
+    ip: "192.168.216.9"
+    netmask: "24"
+    gateway: "192.168.216.1"
+    zone: internal
+  
+  appredis:
+    interface: ens224
+    ip: "192.168.219.1"
+    netmask: "24"
+    zone: appredis
+    
+# Allowed sources for firewall rules
+allowed_sources:
+  pods:
+    address: "192.168.219.2"
+
+# Firewall zones
+firewall_zones:
+  internal:
+    interface: "{{ redis_interfaces.internal.interface }}"
+    services: ["ssh"]
+    masquerade: false
+  
+  appredis:
+    interface: "{{ redis_interfaces.appredis.interface }}"
+    services: []
+    masquerade: false
+    rich_rules:
+      - 'rule family="ipv4" source address="{{ allowed_sources.pods.address }}/32" port port="{{ redis.port }}" protocol="tcp" accept'
+
+# Redis configuration
+redis:
+  # Network
+  port: "6379"
+  bind:
+    - "127.0.0.1"
+    - "{{ redis_interfaces.appredis.ip }}"
+  
+  # Security
+  protected_mode: "yes"
+  
+  # Dangerous commands disabled
+  rename_commands:
+    FLUSHALL: ""
+
+  # Persistence (RDB snapshots)
+  save:
+    - "3600 1"
+    - "300 10"
+    - "60 10000"
+  
+  # Memory limits
+  maxmemory: "768mb"
+  maxmemory_policy: "allkeys-lru"
+  
+  # Paths
+  dir: "/var/lib/redis"
+  logfile: "/var/log/redis/redis.log"
+  loglevel: "notice"
+  
+  # Config file paths
+  config_file: "/etc/redis/redis.conf"
+  config_backup: "/etc/redis/redis.conf.bak"

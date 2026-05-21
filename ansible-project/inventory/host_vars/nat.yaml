@@ -1,0 +1,49 @@
+---
+# Network interfaces configuration
+nat_interfaces:
+  external:
+    interface: ens160
+    ip: "172.24.133.217"
+    netmask: "24"
+    gateway: "{{ public_network_gateway }}"
+    zone: external
+  
+  internal:
+    interface: ens224
+    ip: "192.168.216.1"
+    netmask: "24"
+    zone: internal
+
+# Firewall zones
+firewall_zones:
+  external:
+    interface: "{{ nat_interfaces.external.interface }}"
+    services: ["ssh"]
+    masquerade: true
+  
+  internal:
+    interface: "{{ nat_interfaces.internal.interface }}"
+    services: []
+    masquerade: false
+
+# NAT policy
+nat_policy:
+  name: "internal-external"
+  target: "ACCEPT"
+  masquerade: true
+  ingress_zone: "internal"
+  egress_zone: "external"
+
+# IP Forwarding
+ip_forward: true
+
+# Host entries
+hosts_entries:
+  - ip: "{{ nat_interfaces.internal.ip }}"
+    name: "nat"
+  - ip: "192.168.216.4"
+    name: "proxy"
+  - ip: "192.168.216.8"
+    name: "pods"
+  - ip: "192.168.216.9"
+    name: "redis"

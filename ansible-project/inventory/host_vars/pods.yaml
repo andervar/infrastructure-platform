@@ -1,0 +1,84 @@
+---
+# Network interfaces configuration
+pods_interfaces:
+  internal:
+    interface: ens160
+    ip: "192.168.216.8"
+    gateway: "192.168.216.1"
+    netmask: "24"
+    zone: internal
+    
+  application:
+    interface: ens224
+    ip: "192.168.218.2"
+    gateway: "192.168.218.1"
+    netmask: "24"
+    zone: application
+    
+  appredis:
+    interface: ens256
+    ip: "192.168.219.2"
+    gateway: "192.168.219.1"
+    netmask: "24"
+    zone: appredis
+
+# Allowed sources for firewall rules
+allowed_sources:
+  proxy:
+    address: "192.168.218.1"
+  redis:
+    address: "192.168.219.1"
+
+# Firewall zones
+firewall_zones:
+  internal:
+    interface: "{{ pods_interfaces.internal.interface }}"
+    services: ["ssh"]
+    masquerade: false
+
+  application:
+    interface: "{{ pods_interfaces.application.interface }}"
+    services: []
+    masquerade: false
+    rich_rules:
+      - 'rule family="ipv4" source address="{{ allowed_sources.proxy.address }}/24" port port="8080" protocol="tcp" accept'
+      - 'rule family="ipv4" source address="{{ allowed_sources.proxy.address }}/24" port port="3000" protocol="tcp" accept'
+
+  appredis:
+    interface: "{{ pods_interfaces.appredis.interface }}"
+    services: []
+    masquerade: false
+
+# Podman configuration
+podman_user: "admin"
+containers_base: "/home/{{ podman_user }}/containers"
+quadlet_path: "/home/{{ podman_user }}/.config/containers/systemd"
+
+# Container images
+glpi_image: "docker.io/glpi/glpi:10.0"
+mariadb_image: "docker.io/library/mariadb:10.11"
+wikijs_image: "docker.io/requarks/wiki:2"
+postgres_image: "docker.io/library/postgres:16"
+
+# Database configuration
+glpi_db_name: "glpidb"
+glpi_db_user: "glpiuser"
+
+wikijs_db_name: "wikijs"
+wikijs_db_user: "wikijs"
+
+# Redis connection (for GLPI cache)
+redis_host: "{{ pods_interfaces.appredis.gateway }}"
+redis_port: 6379
+
+# Rootless UIDs for volume permissions
+mariadb_uid: 999
+glpi_uid: 33
+postgres_uid: 999
+wikijs_uid: 1000
+
+# MariaDB configuration
+mariadb_max_connections: 100
+mariadb_buffer_pool_size: "256M"
+mariadb_slow_query_log: 1
+mariadb_long_query_time: 2

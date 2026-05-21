@@ -1,0 +1,7 @@
+# Databases Passwords
+vault_mariadb_root_password: "<PASSWORD_ROOT>"
+vault_mariadb_glpi_password: "<PASSWORD_GLPI>"
+vault_postgres_wikijs_password: "<PASSWORD_WIKIJS>"
+
+# Redis Cache Password
+vault_redis_password: "<PASSWORD_REDIS>"

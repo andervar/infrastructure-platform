@@ -1,0 +1,21 @@
+all:
+  children:
+    control:
+      hosts:
+        nat:
+          ansible_host: localhost
+
+    proxy_hosts:
+      hosts:
+        proxy:
+          ansible_host: proxy-ansible
+
+    container_hosts:
+      hosts:
+        pods:
+          ansible_host: pods-ansible
+
+    cache:
+      hosts:
+        redis:
+          ansible_host: redis-ansible

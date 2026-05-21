@@ -1,0 +1,11 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Pod Wiki.js
+After=network-online.target
+
+[Pod]
+PodName={{ wikijs_pod_name }}
+PublishPort={{ wikijs_pod_publish_port }}
+
+[Install]
+WantedBy=default.target

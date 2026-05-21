@@ -1,0 +1,9 @@
+---
+- name: restart wikijs-pod
+  ansible.builtin.systemd:
+    name: wikijs-pod-pod.service
+    state: restarted
+    scope: user
+    daemon_reload: true
+  become: true
+  become_user: "{{ podman_user }}"

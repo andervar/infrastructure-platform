@@ -1,0 +1,25 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Container Wiki.js
+After={{ postgres_container_name }}.service
+
+[Container]
+Image={{ wikijs_image }}
+ContainerName={{ wikijs_container_name }}
+Pod={{ wikijs_pod_name }}.pod
+EnvironmentFile=%h/{{ wikijs_env_file }}
+
+# Secret
+Secret=postgres_wikijs_password,type=env,target=DB_PASS
+
+# Volumes
+{% for volume in wikijs_volumes %}
+Volume=%h/{{ volume }}
+{% endfor %}
+
+[Service]
+Restart={{ pod_restart_policy }}
+RestartSec={{ wikijs_restart_sec }}
+
+[Install]
+WantedBy=default.target

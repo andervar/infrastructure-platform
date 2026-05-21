@@ -1,0 +1,125 @@
+---
+# ============================================
+# ASSERTIONS
+# ============================================
+- name: Ensure required variables are defined
+  ansible.builtin.assert:
+    that:
+      - podman_user is defined
+      - wikijs_image is defined
+      - postgres_image is defined
+      - wikijs_db_name is defined
+      - wikijs_db_user is defined
+    fail_msg: "Missing required variables for wikijs_pod role"
+
+# ============================================
+# PODMAN SECRETS
+# ============================================
+- name: Verify postgres_wikijs_password secret
+  ansible.builtin.command:
+    cmd: podman secret inspect postgres_wikijs_password
+  register: secret_postgres_wikijs
+  failed_when: false
+  changed_when: false
+  become: true
+  become_user: "{{ podman_user }}"
+
+- name: Create postgres_wikijs_password secret
+  ansible.builtin.shell:
+    cmd: printf '%s' "{{ vault_postgres_wikijs_password }}" | podman secret create postgres_wikijs_password -
+  when: secret_postgres_wikijs.rc != 0
+  become: true
+  become_user: "{{ podman_user }}"
+  no_log: true
+
+# ============================================
+# CONFIGURATION FILES
+# ============================================
+- name: Deploy PostgreSQL env
+  ansible.builtin.template:
+    src: postgres.env.j2
+    dest: "/home/{{ podman_user }}/containers/configs/postgres/postgres.env"
+    owner: "{{ podman_user }}"
+    group: "{{ podman_user }}"
+    mode: '0600'
+  become: true
+  notify: restart wikijs-pod
+
+- name: Deploy WikiJS env
+  ansible.builtin.template:
+    src: wikijs.env.j2
+    dest: "/home/{{ podman_user }}/containers/configs/wikijs/wikijs.env"
+    owner: "{{ podman_user }}"
+    group: "{{ podman_user }}"
+    mode: '0600'
+  become: true
+  notify: restart wikijs-pod
+
+# ============================================
+# QUADLETS
+# ============================================
+- name: Deploy Quadlet wikijs-pod
+  ansible.builtin.template:
+    src: wikijs-pod.pod.j2
+    dest: "{{ quadlet_path }}/wikijs-pod.pod"
+    owner: "{{ podman_user }}"
+    group: "{{ podman_user }}"
+    mode: '0644'
+  become: true
+  notify: restart wikijs-pod
+
+- name: Deploy Quadlet postgres-wikijs
+  ansible.builtin.template:
+    src: postgres-wikijs.container.j2
+    dest: "{{ quadlet_path }}/postgres-wikijs.container"
+    owner: "{{ podman_user }}"
+    group: "{{ podman_user }}"
+    mode: '0644'
+  become: true
+  notify: restart wikijs-pod
+
+- name: Deploy Quadlet wikijs
+  ansible.builtin.template:
+    src: wikijs.container.j2
+    dest: "{{ quadlet_path }}/wikijs.container"
+    owner: "{{ podman_user }}"
+    group: "{{ podman_user }}"
+    mode: '0644'
+  become: true
+  notify: restart wikijs-pod
+
+# ============================================
+# PERMISSIONS FOR VOLUMES
+# ============================================
+- name: Permissions for postgres-data volume (UID 999)
+  ansible.builtin.command:
+    cmd: podman unshare chown -R 999:999 /home/{{ podman_user }}/containers/volumes/postgres-data
+  become: true
+  become_user: "{{ podman_user }}"
+  changed_when: false
+
+- name: Permissions for wikijs-data volume (UID 1000)
+  ansible.builtin.command:
+    cmd: podman unshare chown -R 1000:1000 /home/{{ podman_user }}/containers/volumes/wikijs-data
+  become: true
+  become_user: "{{ podman_user }}"
+  changed_when: false
+
+# ============================================
+# START POD
+# ============================================
+- name: Reload user systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+    scope: user
+  become: true
+  become_user: "{{ podman_user }}"
+
+- name: Enable and start wikijs-pod
+  ansible.builtin.systemd:
+    name: wikijs-pod-pod.service
+    state: started
+    enabled: true
+    scope: user
+  become: true
+  become_user: "{{ podman_user }}"

@@ -1,0 +1,31 @@
+# {{ ansible_managed }}
+[Unit]
+Description=PostgreSQL for Wiki.js
+After=network-online.target
+
+[Container]
+Image={{ postgres_image }}
+ContainerName={{ postgres_container_name }}
+Pod={{ wikijs_pod_name }}.pod
+EnvironmentFile=%h/{{ postgres_env_file }}
+
+# Secret
+Secret=postgres_wikijs_password,type=env,target=POSTGRES_PASSWORD
+
+# Volumes
+{% for volume in postgres_volumes %}
+Volume=%h/{{ volume }}
+{% endfor %}
+
+# Healthcheck
+HealthCmd={{ postgres_healthcheck.cmd }}
+HealthInterval={{ postgres_healthcheck.interval }}
+HealthRetries={{ postgres_healthcheck.retries }}
+HealthStartPeriod={{ postgres_healthcheck.start_period }}
+
+[Service]
+Restart={{ pod_restart_policy }}
+RestartSec={{ postgres_restart_sec }}
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,30 @@
+---
+wikijs_pod_name:        "wikijs-pod"
+wikijs_container_name:  "wikijs"
+postgres_container_name: "postgres-wikijs"
+
+# Environment files
+postgres_env_file: "containers/configs/postgres/postgres.env"
+wikijs_env_file:   "containers/configs/wikijs/wikijs.env"
+
+# Pod
+wikijs_pod_publish_port: "3000:3000"
+
+# Volumes
+wikijs_volumes:
+  - "containers/volumes/wikijs-data:/wiki/data/content:Z"
+
+postgres_volumes:
+  - "containers/volumes/postgres-data:/var/lib/postgresql/data:Z"
+
+# Healthcheck
+postgres_healthcheck:
+  cmd:          "pg_isready -U {{ wikijs_db_user }} -d {{ wikijs_db_name }}"
+  interval:     "30s"
+  retries:      3
+  start_period: "60s"
+
+# Restart
+pod_restart_policy:   "always"
+postgres_restart_sec: "10"
+wikijs_restart_sec:   "15"

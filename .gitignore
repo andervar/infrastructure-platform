@@ -1,0 +1,32 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors and IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python / Ansible runtime artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ansible/
+*.retry
+*.log
+
+# Ansible vault files
+ansible-project/inventory/group_vars/all/vault.yaml
+
+# Local secrets or temporary files
+*.bak
+*.orig
+*.tmp
+*.key
+*.pem
+*.env
+*.password

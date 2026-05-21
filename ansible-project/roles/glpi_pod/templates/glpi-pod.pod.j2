@@ -1,0 +1,10 @@
+[Unit]
+Description={{ glpi_pod_name }}
+After=network-online.target
+
+[Pod]
+PodName={{ glpi_pod_name }}
+PublishPort={{ glpi_pod_publish_port }}
+
+[Install]
+WantedBy=default.target

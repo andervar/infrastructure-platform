@@ -1,0 +1,19 @@
+[mysqld]
+# GLPI-required encoding
+character-set-server  = {{ mariadb_character_set | default('utf8mb4') }}
+collation-server      = {{ mariadb_collation | default('utf8mb4_unicode_ci') }}
+default-time-zone     = {{ mariadb_timezone | default('+00:00') }}
+
+# Connections
+max_connections       = {{ mariadb_max_connections | default(100) }}
+
+# Memory
+innodb_buffer_pool_size = {{ mariadb_buffer_pool_size | default('256M') }}
+
+# Slow query log
+slow_query_log        = {{ mariadb_slow_query_log | default(1) }}
+slow_query_log_file   = {{ mariadb_slow_query_log_file | default('/var/lib/mysql/slow.log') }}
+long_query_time       = {{ mariadb_long_query_time | default(2) }}
+
+# Disable SSL for local connections within the pod
+skip_ssl

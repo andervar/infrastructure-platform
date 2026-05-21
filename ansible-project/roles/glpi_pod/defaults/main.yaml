@@ -1,0 +1,35 @@
+---
+# Default values for glpi_pod role
+glpi_pod_name: "glpi-pod"
+glpi_container_name: "glpi"
+mariadb_container_name: "mariadb"
+
+# Environment variable files
+mariadb_env_file: "containers/configs/mariadb/mariadb.env"
+glpi_env_file: "containers/configs/glpi/glpi.env"
+mariadb_config_file: "containers/configs/mariadb/glpi.cnf"
+
+# Pod configuration
+glpi_pod_publish_port: "8080:80"
+
+# Volume paths (relative to /home/{{ podman_user }})
+glpi_volumes:
+  - "containers/volumes/glpi-files:/var/glpi:Z"
+  - "containers/volumes/glpi-plugins:/var/www/html/glpi/plugins:Z"
+  - "containers/volumes/glpi-marketplace:/var/www/html/glpi/marketplace:Z"
+
+mariadb_volumes:
+  - "containers/volumes/mariadb-data:/var/lib/mysql:Z"
+  - "containers/configs/mariadb/glpi.cnf:/etc/mysql/conf.d/glpi.cnf:ro,Z"
+
+# Healthcheck settings
+mariadb_healthcheck:
+  cmd: "healthcheck.sh --connect --innodb_initialized"
+  interval: "30s"
+  retries: 3
+  start_period: "60s"
+
+# Restart policies
+pod_restart_policy: "always"
+mariadb_restart_sec: "10"
+glpi_restart_sec: "15"

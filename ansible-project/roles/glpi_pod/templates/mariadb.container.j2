@@ -1,0 +1,33 @@
+[Unit]
+Description=MariaDB for GLPI
+After=network-online.target
+
+[Container]
+Image={{ mariadb_image }}
+ContainerName={{ mariadb_container_name }}
+Pod={{ glpi_pod_name }}.pod
+EnvironmentFile=%h/{{ mariadb_env_file }}
+
+# Secrets
+Secret=mariadb_root_password,type=mount
+Secret=mariadb_glpi_password,type=mount
+Environment=MARIADB_ROOT_PASSWORD_FILE=/run/secrets/mariadb_root_password
+Environment=MARIADB_PASSWORD_FILE=/run/secrets/mariadb_glpi_password
+
+# Volumes
+{% for volume in mariadb_volumes %}
+Volume=%h/{{ volume }}
+{% endfor %}
+
+# Healthcheck
+HealthCmd={{ mariadb_healthcheck.cmd }}
+HealthInterval={{ mariadb_healthcheck.interval }}
+HealthRetries={{ mariadb_healthcheck.retries }}
+HealthStartPeriod={{ mariadb_healthcheck.start_period }}
+
+[Service]
+Restart={{ pod_restart_policy }}
+RestartSec={{ mariadb_restart_sec }}
+
+[Install]
+WantedBy=default.target

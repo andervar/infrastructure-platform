@@ -1,0 +1,25 @@
+[Unit]
+Description=Container GLPI
+After={{ mariadb_container_name }}.service
+
+[Container]
+Image={{ glpi_image }}
+ContainerName={{ glpi_container_name }}
+Pod={{ glpi_pod_name }}.pod
+EnvironmentFile=%h/{{ glpi_env_file }}
+
+# Secrets
+Secret=mariadb_glpi_password,type=env,target=GLPI_DB_PASSWORD
+Secret=redis_password,type=env,target=GLPI_CACHE_REDIS_PASSWORD
+
+# Volumes
+{% for volume in glpi_volumes %}
+Volume=%h/{{ volume }}
+{% endfor %}
+
+[Service]
+Restart={{ pod_restart_policy }}
+RestartSec={{ glpi_restart_sec }}
+
+[Install]
+WantedBy=default.target

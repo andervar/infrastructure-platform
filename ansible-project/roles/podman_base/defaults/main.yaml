@@ -1,0 +1,23 @@
+---
+# Default values for podman_base role
+podman_packages:
+  - podman
+  - podman-docker
+  - fuse-overlayfs
+  - slirp4netns
+
+podman_user: "admin"
+podman_uid: 1000
+
+podman_lingering_enabled: true
+
+# Directories to create
+podman_work_directories:
+  - "containers"
+  - "containers/volumes"
+  - "containers/configs"
+  - ".config/containers"
+  - ".config/containers/systemd"
+
+# Base path for Podman containers and configurations
+podman_config_directory: ".config"

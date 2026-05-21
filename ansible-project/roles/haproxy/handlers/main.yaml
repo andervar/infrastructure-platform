@@ -1,0 +1,12 @@
+---
+- name: validate haproxy
+  ansible.builtin.command:
+    cmd: haproxy -c -f /etc/haproxy/haproxy.cfg
+  listen: "validate haproxy"
+  changed_when: false
+
+- name: reload haproxy
+  ansible.builtin.systemd:
+    name: haproxy
+    state: reloaded
+  listen: "reload haproxy"

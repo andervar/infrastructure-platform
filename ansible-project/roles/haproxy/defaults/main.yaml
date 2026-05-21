@@ -1,0 +1,4 @@
+---
+haproxy_package: "haproxy"
+haproxy_service: "haproxy"
+haproxy_config_file: "{{ haproxy.config_file }}"

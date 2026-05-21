@@ -1,0 +1,88 @@
+---
+- name: Install Redis
+  ansible.builtin.dnf:
+    name: "{{ redis_package }}"
+    state: present
+
+- name: Backup original Redis configuration
+  ansible.builtin.copy:
+    src: "{{ redis.config_file }}"
+    dest: "{{ redis.config_backup }}"
+    remote_src: true
+    force: false
+    owner: redis
+    group: root
+    mode: '0640'
+
+- name: Deploy Redis configuration from template
+  ansible.builtin.template:
+    src: redis.conf.j2
+    dest: "{{ redis.config_file }}"
+    owner: redis
+    group: root
+    mode: '0640'
+  become: true
+  notify: restart redis
+
+- name: Wait for Redis to be ready
+  ansible.builtin.wait_for:
+    port: "{{ redis.port }}"
+    host: "127.0.0.1"
+    timeout: 30
+  become: true
+
+- name: Test Redis configuration with PING
+  ansible.builtin.command:
+    cmd: redis-cli -h 127.0.0.1 -p {{ redis.port }} -a "{{ vault_redis_password }}" ping
+  register: redis_test
+  changed_when: false
+  failed_when: redis_test.stdout != 'PONG'
+  no_log: true
+  become: true
+
+- name: Verify SELinux context in data directory
+  ansible.builtin.command:
+    cmd: ls -laZ {{ redis.dir }}
+  register: redis_selinux_context
+  changed_when: false
+
+- name: Display SELinux context of Redis
+  ansible.builtin.debug:
+    msg: "{{ redis_selinux_context.stdout_lines }}"
+
+- name: Enable and start Redis
+  ansible.builtin.systemd:
+    name: "{{ redis_service }}"
+    state: started
+    enabled: true
+
+- name: Verify that Redis is listening on the correct IPs
+  ansible.builtin.command:
+    cmd: ss -tlnp
+  register: redis_listen
+  changed_when: false
+  when: not ansible_check_mode
+
+- name: Verify bind in appredis
+  ansible.builtin.assert:
+    that:
+      - redis_listen.stdout | regex_search(redis_interfaces.appredis.ip + '.*' + redis.port)
+    fail_msg: "Redis is not listening on {{ redis_interfaces.appredis.ip }}:{{ redis.port }}"
+  when: not ansible_check_mode
+
+- name: Verify Redis authentication
+  ansible.builtin.command:
+    cmd: redis-cli -h 127.0.0.1 -p {{ redis.port }} -a "{{ vault_redis_password }}" ping
+  register: redis_ping
+  changed_when: false
+  failed_when: redis_ping.stdout != 'PONG'
+  no_log: true
+  when: not ansible_check_mode
+
+- name: Confirm PONG response
+  ansible.builtin.debug:
+    msg: "Redis responds correctly: {{ redis_ping.stdout }}"
+  when: 
+  - not ansible_check_mode
+  - redis_ping is defined
+  - redis_ping.stdout is defined

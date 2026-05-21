@@ -1,0 +1,13 @@
+---
+- name: restart redis
+  ansible.builtin.systemd:
+    name: redis
+    state: restarted
+  become: true
+
+- name: reload redis config
+  ansible.builtin.command:
+    cmd: redis-cli -a "{{ vault_redis_password }}" CONFIG RELOADCONFIG
+  changed_when: false
+  become: true
+  no_log: true

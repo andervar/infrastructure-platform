@@ -1,0 +1,5 @@
+---
+redis_package: "redis"
+redis_service: "redis"
+redis_config_file: "/etc/redis/redis.conf"
+redis_config_backup: "/etc/redis/redis.conf.bak"

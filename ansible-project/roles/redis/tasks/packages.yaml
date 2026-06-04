@@ -1,0 +1,5 @@
+---
+- name: Install Redis
+  ansible.builtin.dnf:
+    name: "{{ redis_package }}"
+    state: present

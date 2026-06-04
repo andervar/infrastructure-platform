@@ -1,0 +1,20 @@
+---
+- name: Backup original Redis configuration
+  ansible.builtin.copy:
+    src: "{{ redis.config_file }}"
+    dest: "{{ redis.config_backup }}"
+    remote_src: true
+    force: false
+    owner: redis
+    group: root
+    mode: '0640'
+
+- name: Deploy Redis configuration from template
+  ansible.builtin.template:
+    src: redis.conf.j2
+    dest: "{{ redis.config_file }}"
+    owner: redis
+    group: root
+    mode: '0640'
+  become: true
+  notify: restart redis

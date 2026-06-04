@@ -1,0 +1,26 @@
+---
+- name: Wait for Redis to be ready
+  ansible.builtin.wait_for:
+    port: "{{ redis.port }}"
+    host: "127.0.0.1"
+    timeout: 30
+  become: true
+
+- name: Test Redis configuration with PING
+  ansible.builtin.command:
+    cmd: redis-cli -h 127.0.0.1 -p {{ redis.port }} -a "{{ vault_redis_password }}" ping
+  register: redis_test
+  changed_when: false
+  failed_when: redis_test.stdout != 'PONG'
+  no_log: true
+  become: true
+
+- name: Verify SELinux context in data directory
+  ansible.builtin.command:
+    cmd: ls -laZ {{ redis.dir }}
+  register: redis_selinux_context
+  changed_when: false
+
+- name: Display SELinux context of Redis
+  ansible.builtin.debug:
+    msg: "{{ redis_selinux_context.stdout_lines }}"

@@ -1,0 +1,31 @@
+---
+- name: Verify that Redis is listening on the correct IPs
+  ansible.builtin.command:
+    cmd: ss -tlnp
+  register: redis_listen
+  changed_when: false
+  when: not ansible_check_mode
+
+- name: Verify bind in appredis
+  ansible.builtin.assert:
+    that:
+      - redis_listen.stdout | regex_search(redis_interfaces.appredis.ip + '.*' + redis.port)
+    fail_msg: "Redis is not listening on {{ redis_interfaces.appredis.ip }}:{{ redis.port }}"
+  when: not ansible_check_mode
+
+- name: Verify Redis authentication
+  ansible.builtin.command:
+    cmd: redis-cli -h 127.0.0.1 -p {{ redis.port }} -a "{{ vault_redis_password }}" ping
+  register: redis_ping
+  changed_when: false
+  failed_when: redis_ping.stdout != 'PONG'
+  no_log: true
+  when: not ansible_check_mode
+
+- name: Confirm PONG response
+  ansible.builtin.debug:
+    msg: "Redis responds correctly: {{ redis_ping.stdout }}"
+  when:
+    - not ansible_check_mode
+    - redis_ping is defined
+    - redis_ping.stdout is defined

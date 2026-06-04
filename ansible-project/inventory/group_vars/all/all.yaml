@@ -2,10 +2,36 @@
 ansible_user: ansible
 ansible_python_interpreter: /usr/bin/python3
 
-# DNS settings
-dns_servers:
-  - 163.178.88.2
-  - 163.178.88.4
-
 # Public Network Gateway
 public_network_gateway: "172.24.133.1"
+
+# FreeIPA configuration (global)
+ipa_domain: "infra.local"
+ipa_realm: "INFRA.LOCAL"
+ipa_hostname: "ipa"
+ipa_fqdn: "{{ ipa_hostname }}.{{ ipa_domain }}"
+ipa_ip: "192.168.216.10"
+
+# DNS settings
+dns_server: "{{ ipa_ip }}"
+
+# Forwarders
+ipa_forwarder: "163.178.88.2"
+
+# Hosts entries for all servers
+hosts_entries:
+  - ip: "192.168.216.1"
+    name: "nat.{{ ipa_domain }}"
+    aliases: ["nat"]
+  - ip: "192.168.216.4"
+    name: "proxy.{{ ipa_domain }}"
+    aliases: ["proxy"]
+  - ip: "192.168.216.8"
+    name: "pods.{{ ipa_domain }}"
+    aliases: ["pods"]
+  - ip: "192.168.216.9"
+    name: "redis.{{ ipa_domain }}"
+    aliases: ["redis"]
+  - ip: "{{ ipa_ip }}"
+    name: "{{ ipa_fqdn }}"
+    aliases: ["{{ ipa_hostname }}"]

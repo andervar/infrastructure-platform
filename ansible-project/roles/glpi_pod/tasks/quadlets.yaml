@@ -1,0 +1,30 @@
+---
+- name: Deploy Quadlet glpi-pod
+  ansible.builtin.template:
+    src: glpi-pod.pod.j2
+    dest: "{{ quadlet_path }}/glpi-pod.pod"
+    owner: "{{ podman_user }}"
+    group: "{{ podman_user }}"
+    mode: '0644'
+  become: true
+  notify: restart glpi-pod
+
+- name: Deploy Quadlet mariadb
+  ansible.builtin.template:
+    src: mariadb.container.j2
+    dest: "{{ quadlet_path }}/mariadb.container"
+    owner: "{{ podman_user }}"
+    group: "{{ podman_user }}"
+    mode: '0644'
+  become: true
+  notify: restart glpi-pod
+
+- name: Deploy Quadlet glpi
+  ansible.builtin.template:
+    src: glpi.container.j2
+    dest: "{{ quadlet_path }}/glpi.container"
+    owner: "{{ podman_user }}"
+    group: "{{ podman_user }}"
+    mode: '0644'
+  become: true
+  notify: restart glpi-pod

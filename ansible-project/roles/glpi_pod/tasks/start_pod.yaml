@@ -1,0 +1,16 @@
+---
+- name: Reload user systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+    scope: user
+  become: true
+  become_user: "{{ podman_user }}"
+
+- name: Enable and start glpi-pod
+  ansible.builtin.systemd:
+    name: glpi-pod-pod.service
+    state: started
+    enabled: true
+    scope: user
+  become: true
+  become_user: "{{ podman_user }}"

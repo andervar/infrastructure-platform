@@ -1,0 +1,16 @@
+---
+- name: Redis configuration for GLPI
+  ansible.builtin.command:
+    cmd: >
+      podman exec glpi php /var/www/glpi/bin/console cache:configure
+      --context=core
+      --dsn="redis://{{ vault_redis_password }}@{{ redis_host }}:{{ redis_port }}/0"
+      --no-interaction
+  become: true
+  become_user: "{{ podman_user }}"
+  no_log: true
+  register: glpi_cache_config
+  changed_when: "'configured' in glpi_cache_config.stdout"
+  failed_when:
+    - glpi_cache_config.rc != 0
+    - "'already configured' not in glpi_cache_config.stdout"

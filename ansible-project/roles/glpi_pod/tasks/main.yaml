@@ -1,203 +1,28 @@
 ---
-# ============================================
-# ASSERTIONS
-# ============================================
-- name: Ensure required variables are defined
-  ansible.builtin.assert:
-    that:
-      - podman_user is defined
-      - glpi_image is defined
-      - mariadb_image is defined
-      - glpi_db_name is defined
-      - glpi_db_user is defined
-    fail_msg: "Missing required variables for glpi_pod role"
+- name: Assert required variables for glpi_pod role
+  ansible.builtin.import_tasks: assertions.yaml
+  tags: [glpi_pod, assertions]
 
-# ============================================
-# PODMAN SECRETS
-# ============================================
-- name: Verify secret mariadb_root_password
-  ansible.builtin.command:
-    cmd: podman secret inspect mariadb_root_password
-  register: secret_mariadb_root
-  failed_when: false
-  changed_when: false
-  become: true
-  become_user: "{{ podman_user }}"
+- name: Manage Podman secrets for GLPI
+  ansible.builtin.import_tasks: podman_secrets.yaml
+  tags: [glpi_pod, podman_secrets]
 
-- name: Create secret mariadb_root_password
-  ansible.builtin.shell:
-    cmd: printf '%s' "{{ vault_mariadb_root_password }}" | podman secret create mariadb_root_password -
-  when: secret_mariadb_root.rc != 0
-  become: true
-  become_user: "{{ podman_user }}"
-  no_log: true
+- name: Deploy configuration files for GLPI and MariaDB
+  ansible.builtin.import_tasks: configuration_files.yaml
+  tags: [glpi_pod, configuration_files]
 
-- name: Verify secret mariadb_glpi_password
-  ansible.builtin.command:
-    cmd: podman secret inspect mariadb_glpi_password
-  register: secret_mariadb_glpi
-  failed_when: false
-  changed_when: false
-  become: true
-  become_user: "{{ podman_user }}"
+- name: Deploy Quadlets for GLPI pod
+  ansible.builtin.import_tasks: quadlets.yaml
+  tags: [glpi_pod, quadlets]
 
-- name: Create secret mariadb_glpi_password
-  ansible.builtin.shell:
-    cmd: printf '%s' "{{ vault_mariadb_glpi_password }}" | podman secret create mariadb_glpi_password -
-  when: secret_mariadb_glpi.rc != 0
-  become: true
-  become_user: "{{ podman_user }}"
-  no_log: true
+- name: Set Volumes Permissions
+  ansible.builtin.import_tasks: volumes_permissions.yaml
+  tags: [glpi_pod, volumes_permissions]
 
-- name: Verify secret redis_password
-  ansible.builtin.command:
-    cmd: podman secret inspect redis_password
-  register: secret_redis
-  failed_when: false
-  changed_when: false
-  become: true
-  become_user: "{{ podman_user }}"
+- name: Start GLPI pod
+  ansible.builtin.import_tasks: start_pod.yaml
+  tags: [glpi_pod, start_pod]
 
-- name: Create secret redis_password
-  ansible.builtin.shell:
-    cmd: printf '%s' "{{ vault_redis_password }}" | podman secret create redis_password -
-  when: secret_redis.rc != 0
-  become: true
-  become_user: "{{ podman_user }}"
-  no_log: true
-
-# ============================================
-# CONFIGURATION FILES
-# ============================================
-- name: Deploy configuration MariaDB
-  ansible.builtin.template:
-    src: mariadb.cnf.j2
-    dest: "/home/{{ podman_user }}/containers/configs/mariadb/glpi.cnf"
-    owner: "{{ podman_user }}"
-    group: "{{ podman_user }}"
-    mode: '0644'
-  become: true
-  notify: restart glpi-pod
-
-- name: Deploy env MariaDB
-  ansible.builtin.template:
-    src: mariadb.env.j2
-    dest: "/home/{{ podman_user }}/containers/configs/mariadb/mariadb.env"
-    owner: "{{ podman_user }}"
-    group: "{{ podman_user }}"
-    mode: '0600'
-  become: true
-  notify: restart glpi-pod
-
-- name: Deploy env GLPI
-  ansible.builtin.template:
-    src: glpi.env.j2
-    dest: "/home/{{ podman_user }}/containers/configs/glpi/glpi.env"
-    owner: "{{ podman_user }}"
-    group: "{{ podman_user }}"
-    mode: '0600'
-  become: true
-  notify: restart glpi-pod
-
-# ============================================
-# QUADLETS
-# ============================================
-- name: Deploy Quadlet glpi-pod
-  ansible.builtin.template:
-    src: glpi-pod.pod.j2
-    dest: "{{ quadlet_path }}/glpi-pod.pod"
-    owner: "{{ podman_user }}"
-    group: "{{ podman_user }}"
-    mode: '0644'
-  become: true
-  notify: restart glpi-pod
-
-- name: Deploy Quadlet mariadb
-  ansible.builtin.template:
-    src: mariadb.container.j2
-    dest: "{{ quadlet_path }}/mariadb.container"
-    owner: "{{ podman_user }}"
-    group: "{{ podman_user }}"
-    mode: '0644'
-  become: true
-  notify: restart glpi-pod
-
-- name: Deploy Quadlet glpi
-  ansible.builtin.template:
-    src: glpi.container.j2
-    dest: "{{ quadlet_path }}/glpi.container"
-    owner: "{{ podman_user }}"
-    group: "{{ podman_user }}"
-    mode: '0644'
-  become: true
-  notify: restart glpi-pod
-
-# ============================================
-# VOLUMES PERMISSIONS
-# ============================================
-
-- name: Permissions for volume MariaDB (UID 999)
-  ansible.builtin.command:
-    cmd: podman unshare chown -R 999:999 /home/{{ podman_user }}/containers/volumes/mariadb-data
-  become: true
-  become_user: "{{ podman_user }}"
-  changed_when: false
-
-- name: Permissions for volume glpi-files (UID 33)
-  ansible.builtin.command:
-    cmd: podman unshare chown -R 33:33 /home/{{ podman_user }}/containers/volumes/glpi-files
-  become: true
-  become_user: "{{ podman_user }}"
-  changed_when: false
-
-- name: Permissions for volume glpi-plugins (UID 33)
-  ansible.builtin.command:
-    cmd: podman unshare chown -R 33:33 /home/{{ podman_user }}/containers/volumes/glpi-plugins
-  become: true
-  become_user: "{{ podman_user }}"
-  changed_when: false
-
-- name: Permissions for volume glpi-marketplace (UID 33)
-  ansible.builtin.command:
-    cmd: podman unshare chown -R 33:33 /home/{{ podman_user }}/containers/volumes/glpi-marketplace
-  become: true
-  become_user: "{{ podman_user }}"
-  changed_when: false
-
-# ============================================
-# START POD
-# ============================================
-- name: Reload user systemd
-  ansible.builtin.systemd:
-    daemon_reload: true
-    scope: user
-  become: true
-  become_user: "{{ podman_user }}"
-
-- name: Enable and start glpi-pod
-  ansible.builtin.systemd:
-    name: glpi-pod-pod.service
-    state: started
-    enabled: true
-    scope: user
-  become: true
-  become_user: "{{ podman_user }}"
-
-# ============================================
-# REDIS CACHE CONFIGURATION FOR GLPI
-# ============================================
-- name: Redis configuration for GLPI
-  ansible.builtin.command:
-    cmd: >
-      podman exec glpi php /var/www/glpi/bin/console cache:configure
-      --context=core
-      --dsn="redis://{{ vault_redis_password }}@{{ redis_host }}:{{ redis_port }}/0"
-      --no-interaction
-  become: true
-  become_user: "{{ podman_user }}"
-  no_log: true
-  register: glpi_cache_config
-  changed_when: "'configured' in glpi_cache_config.stdout"
-  failed_when:
-    - glpi_cache_config.rc != 0
-    - "'already configured' not in glpi_cache_config.stdout"
+- name: Deploy configuration files for Redis
+  ansible.builtin.import_tasks: redis.yaml
+  tags: [glpi_pod, redis]

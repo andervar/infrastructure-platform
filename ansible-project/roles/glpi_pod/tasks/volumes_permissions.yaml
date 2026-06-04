@@ -1,0 +1,28 @@
+---
+- name: Permissions for volume MariaDB (UID 999)
+  ansible.builtin.command:
+    cmd: podman unshare chown -R 999:999 /home/{{ podman_user }}/containers/volumes/mariadb-data
+  become: true
+  become_user: "{{ podman_user }}"
+  changed_when: false
+
+- name: Permissions for volume glpi-files (UID 33)
+  ansible.builtin.command:
+    cmd: podman unshare chown -R 33:33 /home/{{ podman_user }}/containers/volumes/glpi-files
+  become: true
+  become_user: "{{ podman_user }}"
+  changed_when: false
+
+- name: Permissions for volume glpi-plugins (UID 33)
+  ansible.builtin.command:
+    cmd: podman unshare chown -R 33:33 /home/{{ podman_user }}/containers/volumes/glpi-plugins
+  become: true
+  become_user: "{{ podman_user }}"
+  changed_when: false
+
+- name: Permissions for volume glpi-marketplace (UID 33)
+  ansible.builtin.command:
+    cmd: podman unshare chown -R 33:33 /home/{{ podman_user }}/containers/volumes/glpi-marketplace
+  become: true
+  become_user: "{{ podman_user }}"
+  changed_when: false

@@ -1,0 +1,30 @@
+---
+- name: Deploy configuration MariaDB
+  ansible.builtin.template:
+    src: mariadb.cnf.j2
+    dest: "/home/{{ podman_user }}/containers/configs/mariadb/glpi.cnf"
+    owner: "{{ podman_user }}"
+    group: "{{ podman_user }}"
+    mode: '0644'
+  become: true
+  notify: restart glpi-pod
+
+- name: Deploy env MariaDB
+  ansible.builtin.template:
+    src: mariadb.env.j2
+    dest: "/home/{{ podman_user }}/containers/configs/mariadb/mariadb.env"
+    owner: "{{ podman_user }}"
+    group: "{{ podman_user }}"
+    mode: '0600'
+  become: true
+  notify: restart glpi-pod
+
+- name: Deploy env GLPI
+  ansible.builtin.template:
+    src: glpi.env.j2
+    dest: "/home/{{ podman_user }}/containers/configs/glpi/glpi.env"
+    owner: "{{ podman_user }}"
+    group: "{{ podman_user }}"
+    mode: '0600'
+  become: true
+  notify: restart glpi-pod

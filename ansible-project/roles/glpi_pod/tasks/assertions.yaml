@@ -1,0 +1,10 @@
+---
+- name: Ensure required variables are defined
+  ansible.builtin.assert:
+    that:
+      - podman_user is defined
+      - glpi_image is defined
+      - mariadb_image is defined
+      - glpi_db_name is defined
+      - glpi_db_user is defined
+    fail_msg: "Missing required variables for glpi_pod role"

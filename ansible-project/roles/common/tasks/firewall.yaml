@@ -21,6 +21,22 @@
 - name: Flush handlers to apply new zones immediately
   meta: flush_handlers
 
+- name: Get current permanent services per zone
+  ansible.builtin.command:
+    cmd: "firewall-cmd --permanent --zone={{ item.key }} --list-services"
+  loop: "{{ firewall_zones | dict2items }}"
+  register: zone_current_services
+  changed_when: false
+  loop_control:
+    label: "zone: {{ item.key }}"
+
+- name: Remove unnecessary services per zone
+  ansible.builtin.include_tasks: firewall_remove_services.yaml
+  loop: "{{ zone_current_services.results }}"
+  loop_control:
+    loop_var: zone_result
+    label: "{{ zone_result.item.key }}"
+
 - name: Assign interfaces to zones
   ansible.posix.firewalld:
     zone: "{{ item.key }}"

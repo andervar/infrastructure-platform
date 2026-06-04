@@ -1,0 +1,16 @@
+---
+- name: "Remove unwanted services from zone {{ zone_result.item.key }}"
+  ansible.posix.firewalld:
+    zone: "{{ zone_result.item.key }}"
+    service: "{{ svc }}"
+    permanent: true
+    state: disabled
+  vars:
+    wanted: "{{ firewall_zones[zone_result.item.key].services | default([]) }}"
+    current: "{{ zone_result.stdout.split() }}"
+    to_remove: "{{ current | difference(wanted) }}"
+  loop: "{{ to_remove }}"
+  loop_control:
+    loop_var: svc
+  when: to_remove | length > 0
+  notify: reload firewalld

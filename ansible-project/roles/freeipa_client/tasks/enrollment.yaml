@@ -1,0 +1,26 @@
+---
+- name: Check if IPA client is already enrolled
+  ansible.builtin.stat:
+    path: "{{ ipa_client_install_marker }}"
+  register: ipa_client_installed
+
+- name: Enroll host into FreeIPA domain
+  ansible.builtin.command:
+    cmd: >
+      ipa-client-install
+      --unattended
+      --domain="{{ ipa_domain }}"
+      --realm="{{ ipa_realm | upper }}"
+      --server="{{ ipa_fqdn }}"
+      --hostname="{{ ipa_client_fqdn }}"
+      --principal="admin"
+      --password="{{ vault_ipa_admin_password }}"
+      --mkhomedir
+      --enable-dns-updates
+      --no-ntp
+      --force-join
+  when: not ipa_client_installed.stat.exists
+  no_log: true
+  notify:
+    - Restart sssd
+    - Restart oddjobd

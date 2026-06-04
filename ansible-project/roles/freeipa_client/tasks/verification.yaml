@@ -1,0 +1,48 @@
+---
+- name: Verify SSSD is resolving IPA users
+  ansible.builtin.command: id admin
+  register: sssd_check
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Show SSSD admin identity
+  ansible.builtin.debug:
+    msg: "SSSD OK — {{ sssd_check.stdout }}"
+  when: sssd_check.stdout | default('') | length > 0
+
+- name: Verify DNS resolves IPA server from client
+  ansible.builtin.command: "dig +short {{ ipa_fqdn }}"
+  register: dns_result
+  changed_when: false
+  check_mode: false
+
+- name: Show DNS resolution result
+  ansible.builtin.debug:
+    msg: "{{ ipa_fqdn }} resolves to '{{ dns_result.stdout }}'"
+
+- name: Assert DNS resolves IPA server to correct IP
+  ansible.builtin.assert:
+    that:
+      - ipa_ip in dns_result.stdout
+    fail_msg: >
+      DNS resuelve {{ ipa_fqdn }} a '{{ dns_result.stdout }}'
+      pero se esperaba {{ ipa_ip }}.
+    success_msg: "DNS OK — {{ ipa_fqdn }} → {{ ipa_ip }}"
+  when: not ansible_check_mode
+
+- name: Verify Kerberos ticket obtainable from client
+  ansible.builtin.shell: |
+    echo "{{ vault_ipa_admin_password }}" | kinit admin@{{ ipa_realm }}
+    klist
+    kdestroy
+  register: kinit_result
+  changed_when: false
+  no_log: true
+
+- name: Confirm Kerberos authentication succeeded from client
+  ansible.builtin.debug:
+    msg: "Kerberos OK — admin@{{ ipa_realm }} autenticado desde {{ inventory_hostname }}"
+  when: 
+    - not ansible_check_mode
+    - kinit_result.rc == 0

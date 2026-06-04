@@ -1,0 +1,6 @@
+---
+- name: Install FreeIPA client packages
+  ansible.builtin.dnf:
+    name: "{{ ipa_client_packages }}"
+    state: present
+    update_cache: true

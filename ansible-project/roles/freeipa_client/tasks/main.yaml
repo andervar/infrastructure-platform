@@ -1,0 +1,20 @@
+---
+- name: Install FreeIPA client packages
+  ansible.builtin.import_tasks: packages.yaml
+  tags: [freeipa_client, packages]
+
+- name: Configure DNS for FreeIPA client
+  ansible.builtin.import_tasks: dns.yaml
+  tags: [freeipa_client, dns]
+
+- name: Perform pre-enrollment configuration
+  ansible.builtin.import_tasks: pre_enrollment.yaml
+  tags: [freeipa_client, pre_enrollment]
+
+- name: Enroll host into FreeIPA domain
+  ansible.builtin.import_tasks: enrollment.yaml
+  tags: [freeipa_client, enrollment]
+
+- name: Verify FreeIPA client enrollment
+  ansible.builtin.import_tasks: verification.yaml
+  tags: [freeipa_client, verification]

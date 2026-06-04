@@ -1,0 +1,49 @@
+---
+- name: Check current DNS priority on the internal interface
+  ansible.builtin.shell: |
+    nmcli -g ipv4.dns-priority connection show "{{ firewall_zones.internal.interface }}"
+  register: internal_dns_priority
+  changed_when: false
+  failed_when: false
+  when: firewall_zones.internal is defined
+
+- name: Force FreeIPA DNS priority on the internal interface
+  ansible.builtin.command: >
+    nmcli connection modify "{{ firewall_zones.internal.interface }}"
+    ipv4.dns "{{ ipa_ip }}"
+    ipv4.dns-priority -1
+  when: 
+    - firewall_zones.internal is defined
+    - internal_dns_priority.stdout != "-1"
+  notify: restart NetworkManager
+
+- name: Check ignore-auto-dns status on non-internal interfaces
+  ansible.builtin.shell: |
+    nmcli -g ipv4.ignore-auto-dns connection show "{{ item.value.interface }}"
+  loop: "{{ firewall_zones | dict2items }}"
+  when: item.key != 'internal' and item.value.interface is defined
+  register: external_dns_check
+  changed_when: false
+  failed_when: false
+
+- name: Prevent external/application interfaces from overriding DNS
+  ansible.builtin.command: >
+    nmcli connection modify "{{ item.item.value.interface }}" ipv4.ignore-auto-dns yes
+  loop: "{{ external_dns_check.results }}"
+  when: 
+    - not item.skipped | default(false)
+    - item.stdout is defined
+    - item.stdout != "yes"
+  notify: restart NetworkManager
+
+- name: Read current resolv.conf content
+  ansible.builtin.slurp:
+    src: /etc/resolv.conf
+  register: resolv_conf_content
+
+- name: Force NetworkManager restart if FreeIPA IP is missing in resolv.conf
+  ansible.builtin.systemd:
+    name: NetworkManager
+    state: restarted
+  become: true
+  when: ipa_ip not in (resolv_conf_content.content | b64decode)

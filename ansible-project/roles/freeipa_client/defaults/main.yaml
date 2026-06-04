@@ -1,0 +1,25 @@
+---
+# Domain and host configuration
+ipa_domain: "infra.local"
+ipa_realm:  "INFRA.LOCAL"
+ipa_hostname: "ipa"
+ipa_fqdn: "{{ ipa_hostname }}.{{ ipa_domain }}"
+ipa_ip: "{{ ipa_server_ip }}"
+
+# DNS
+ipa_client_fqdn: "{{ inventory_hostname }}.{{ ipa_domain }}"
+
+# Chrony
+ipa_configure_chrony: true
+ipa_chrony_service: "chronyd"
+
+# Packages to install for FreeIPA client
+ipa_client_packages:
+  - freeipa-client
+  - oddjob
+  - oddjob-mkhomedir
+  - sssd
+  - sssd-ipa
+
+# Idempotency marker
+ipa_client_install_marker: "/etc/ipa/default.conf"

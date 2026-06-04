@@ -1,0 +1,21 @@
+---
+- name: Set client FQDN as system hostname
+  ansible.builtin.hostname:
+    name: "{{ ipa_client_fqdn }}"
+
+- name: Ensure chronyd is running before enrollment
+  ansible.builtin.service:
+    name: "{{ ipa_chrony_service }}"
+    state: started
+    enabled: true
+  when: ipa_configure_chrony | bool
+
+- name: Force immediate time synchronization
+  ansible.builtin.command: chronyc makestep
+  changed_when: false
+  failed_when: false
+  when: ipa_configure_chrony | bool
+
+- name: Set umask to 0022 for install session
+  ansible.builtin.command: bash -c "umask 0022"
+  changed_when: false

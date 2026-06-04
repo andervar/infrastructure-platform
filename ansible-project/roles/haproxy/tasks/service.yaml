@@ -1,0 +1,6 @@
+---
+- name: Ensure haproxy is started and enabled
+  ansible.builtin.systemd:
+    name: "{{ haproxy_service }}"
+    state: started
+    enabled: true

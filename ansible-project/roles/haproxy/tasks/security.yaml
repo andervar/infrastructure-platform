@@ -1,0 +1,9 @@
+---
+- name: Configure SELinux booleans for haproxy
+  ansible.posix.seboolean:
+    name: "{{ item }}"
+    state: true
+    persistent: true
+  loop:
+    - httpd_can_network_connect
+    - haproxy_connect_any

@@ -1,0 +1,49 @@
+---
+- name: Ensure SSL directories exist with correct permissions
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: /etc/ssl/private, mode: '0700' }
+    - { path: /etc/ssl/certs, mode: '0755' }
+
+- name: Set secure permissions on private directory
+  ansible.builtin.file:
+    path: /etc/ssl/private
+    mode: '0700'
+
+- name: Deploy OpenSSL configuration template
+  ansible.builtin.template:
+    src: openssl.cnf.j2
+    dest: "/etc/pki/tls/{{ inventory_hostname }}.cnf"
+    mode: '0644'
+
+- name: Generate SSL certificate and key
+  ansible.builtin.command:
+    cmd: |
+      openssl req -x509 -nodes -days {{ haproxy_ssl.days }} -newkey rsa:{{ haproxy_ssl.key_size }} \
+        -keyout {{ haproxy_ssl.key_path }} \
+        -out {{ haproxy_ssl.crt_path }} \
+        -config /etc/pki/tls/{{ inventory_hostname }}.cnf
+    creates: "{{ haproxy_ssl.key_path }}"
+
+- name: Set permissions on SSL key
+  ansible.builtin.file:
+    path: "{{ haproxy_ssl.key_path }}"
+    mode: '0600'
+
+- name: Generate PEM file for HAProxy
+  ansible.builtin.shell:
+    cmd: |
+      cat {{ haproxy_ssl.crt_path }} \
+          {{ haproxy_ssl.key_path }} \
+          > {{ haproxy_ssl.cert_path }}
+    creates: "{{ haproxy_ssl.cert_path }}"
+
+- name: Set permissions on PEM file
+  ansible.builtin.file:
+    path: "{{ haproxy_ssl.cert_path }}"
+    mode: '0600'

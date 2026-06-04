@@ -1,0 +1,6 @@
+---
+- name: Install haproxy package
+  ansible.builtin.dnf:
+    name: "{{ haproxy_package }}"
+    state: present
+  notify: reload haproxy

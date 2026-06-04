@@ -1,6 +1,6 @@
 all:
   children:
-    control:
+    control_hosts:
       hosts:
         nat:
           ansible_host: localhost
@@ -15,7 +15,12 @@ all:
         pods:
           ansible_host: pods-ansible
 
-    cache:
+    cache_hosts:
       hosts:
         redis:
           ansible_host: redis-ansible
+    
+    ipa_hosts:
+      hosts:
+        ipa:
+          ansible_host: ipa-ansible

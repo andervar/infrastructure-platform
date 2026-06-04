@@ -1,0 +1,10 @@
+---
+- name: Test FreeIPA Client Role
+  hosts:
+    - control_hosts
+    - proxy_hosts
+    - container_hosts
+    - cache_hosts
+  gather_facts: true
+  roles:
+    - freeipa_client

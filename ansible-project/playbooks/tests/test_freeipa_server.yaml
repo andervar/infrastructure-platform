@@ -1,0 +1,6 @@
+---
+- name: Test FreeIPA server Role
+  hosts: ipa_hosts
+  gather_facts: true
+  roles:
+    - freeipa_server

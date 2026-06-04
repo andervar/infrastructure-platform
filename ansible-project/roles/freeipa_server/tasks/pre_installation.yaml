@@ -1,0 +1,30 @@
+---
+- name: Set FQDN as system hostname
+  ansible.builtin.hostname:
+    name: "{{ ipa_fqdn }}"
+
+- name: Ensure chronyd is running before install
+  ansible.builtin.service:
+    name: "{{ ipa_chrony_service }}"
+    state: started
+    enabled: true
+  when: ipa_configure_chrony | bool
+
+- name: Force immediate time synchronization
+  ansible.builtin.command: chronyc makestep
+  changed_when: false
+  failed_when: false
+  when: ipa_configure_chrony | bool
+
+- name: Set umask to 0022 for install session
+  ansible.builtin.command: bash -c "umask 0022"
+  changed_when: false
+
+- name: Assert minimum RAM (1.5 GB required by FreeIPA)
+  ansible.builtin.assert:
+    that:
+      - ansible_memtotal_mb >= 1500
+    fail_msg: >
+      FreeIPA requires at least 1.5 GB of RAM.
+      This host has only {{ ansible_memtotal_mb }} MB.
+    success_msg: "RAM OK: {{ ansible_memtotal_mb }} MB"

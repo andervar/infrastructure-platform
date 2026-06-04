@@ -1,0 +1,12 @@
+---
+- name: Enable required SELinux booleans for FreeIPA
+  ansible.posix.seboolean:
+    name: "{{ item }}"
+    state: true
+    persistent: true
+  loop: "{{ ipa_selinux_booleans }}"
+
+- name: Ensure SELinux is enforcing after install
+  ansible.posix.selinux:
+    policy: targeted
+    state: enforcing

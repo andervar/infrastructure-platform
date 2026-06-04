@@ -1,0 +1,45 @@
+---
+- name: Check ipactl status
+  ansible.builtin.command: ipactl status
+  register: ipa_status
+  changed_when: false
+  failed_when: "'RUNNING' not in ipa_status.stdout"
+  check_mode: false
+
+- name: Show IPA service status
+  ansible.builtin.debug:
+    var: ipa_status.stdout_lines
+
+- name: Verify admin Kerberos authentication
+  ansible.builtin.shell: |
+    echo "{{ vault_ipa_admin_password }}" | kinit admin@{{ ipa_realm }}
+    klist
+    kdestroy
+  register: kinit_result
+  changed_when: false
+  no_log: true
+  check_mode: false
+
+- name: Confirm Kerberos authentication succeeded
+  ansible.builtin.debug:
+    msg: "Kerberos OK — admin@{{ ipa_realm }} autenticado correctamente"
+  when: kinit_result.rc == 0
+
+- name: Verify DNS resolution for IPA FQDN
+  ansible.builtin.command: "dig +short {{ ipa_fqdn }}"
+  register: dns_result
+  changed_when: false
+  check_mode: false
+
+- name: Show resolved IP
+  ansible.builtin.debug:
+    msg: "{{ ipa_fqdn }} resolves to '{{ dns_result.stdout }}'"
+
+- name: Assert DNS resolves to correct IP
+  ansible.builtin.assert:
+    that:
+      - ipa_ip in dns_result.stdout
+    fail_msg: >
+      DNS resuelve {{ ipa_fqdn }} a '{{ dns_result.stdout }}'
+      pero se esperaba {{ ipa_ip }}.
+    success_msg: "DNS OK — {{ ipa_fqdn }} → {{ ipa_ip }}"

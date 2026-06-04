@@ -1,0 +1,10 @@
+---
+- name: Restart chronyd
+  ansible.builtin.service:
+    name: "{{ ipa_chrony_service }}"
+    state: restarted
+
+- name: Restart IPA services
+  ansible.builtin.command: ipactl restart
+  changed_when: true
+  when: ipa_installed.stat.exists | default(false)

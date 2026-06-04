@@ -1,0 +1,32 @@
+---
+# Domain and host configuration
+ipa_domain: "infra.local"
+ipa_realm: "INFRA.LOCAL"
+ipa_hostname: "ipa"
+ipa_fqdn: "{{ ipa_hostname }}.{{ ipa_domain }}"
+ipa_ip: "{{ ipa_interfaces.internal.ip }}"
+
+# DNS
+ipa_setup_dns: true
+ipa_auto_reverse: true
+ipa_allow_zone_overlap: true
+ipa_forwarder: "163.178.88.2"
+
+# Chrony
+ipa_configure_chrony: true
+ipa_chrony_service: "chronyd"
+
+# Packages to install for FreeIPA server
+ipa_server_packages:
+  - freeipa-server
+  - freeipa-server-dns
+  - freeipa-client
+
+# SELinux booleans to set for FreeIPA server
+ipa_selinux_booleans:
+  - httpd_can_connect_ldap
+  - httpd_can_network_connect
+  - httpd_manage_ipa
+
+# Idempotency marker
+ipa_install_marker: "/etc/ipa/ca.crt"

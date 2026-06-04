@@ -1,0 +1,27 @@
+---
+- name: Check if FreeIPA is already installed
+  ansible.builtin.stat:
+    path: "{{ ipa_install_marker }}"
+  register: ipa_installed
+
+- name: Install FreeIPA server (5-15 minutes)
+  ansible.builtin.command:
+    cmd: >-
+      ipa-server-install
+      --unattended
+      --realm={{ ipa_realm }}
+      --domain={{ ipa_domain }}
+      --hostname={{ ipa_fqdn }}
+      --ip-address={{ ipa_ip }}
+      --admin-password={{ vault_ipa_admin_password }}
+      --ds-password={{ vault_ipa_ds_password }}
+      --setup-dns
+      --auto-reverse
+      --allow-zone-overlap
+      --forwarder={{ ipa_forwarder }}
+      --no-ntp
+  when: not ipa_installed.stat.exists
+  no_log: true
+  notify: Restart IPA services
+  async: 900
+  poll: 30

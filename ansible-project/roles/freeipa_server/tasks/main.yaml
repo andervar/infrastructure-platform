@@ -1,0 +1,20 @@
+---
+- name: Install FreeIPA server packages
+  ansible.builtin.include_tasks: packages.yaml
+  tags: [freeipa_server, packages]
+
+- name: Perform pre-installation configuration
+  ansible.builtin.include_tasks: pre_installation.yaml
+  tags: [freeipa_server, pre_installation]
+
+- name: Install FreeIPA server
+  ansible.builtin.include_tasks: installation.yaml
+  tags: [freeipa_server, installation]
+
+- name: Perform post-installation configuration
+  ansible.builtin.include_tasks: post_installation.yaml
+  tags: [freeipa_server, post_installation]
+
+- name: Verify FreeIPA server installation
+  ansible.builtin.include_tasks: verification.yaml
+  tags: [freeipa_server, verification]

@@ -1,0 +1,16 @@
+---
+- name: Reload user systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+    scope: user
+  become: true
+  become_user: "{{ podman_user }}"
+
+- name: Enable and start wikijs-pod
+  ansible.builtin.systemd:
+    name: wikijs-pod-pod.service
+    state: started
+    enabled: true
+    scope: user
+  become: true
+  become_user: "{{ podman_user }}"

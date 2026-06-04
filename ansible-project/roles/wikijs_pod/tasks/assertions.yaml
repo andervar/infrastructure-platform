@@ -1,0 +1,10 @@
+---
+- name: Ensure required variables are defined
+  ansible.builtin.assert:
+    that:
+      - podman_user is defined
+      - wikijs_image is defined
+      - postgres_image is defined
+      - wikijs_db_name is defined
+      - wikijs_db_user is defined
+    fail_msg: "Missing required variables for wikijs_pod role"

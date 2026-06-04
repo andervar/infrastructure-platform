@@ -1,0 +1,30 @@
+---
+- name: Deploy Quadlet wikijs-pod
+  ansible.builtin.template:
+    src: wikijs-pod.pod.j2
+    dest: "{{ quadlet_path }}/wikijs-pod.pod"
+    owner: "{{ podman_user }}"
+    group: "{{ podman_user }}"
+    mode: '0644'
+  become: true
+  notify: restart wikijs-pod
+
+- name: Deploy Quadlet postgres-wikijs
+  ansible.builtin.template:
+    src: postgres-wikijs.container.j2
+    dest: "{{ quadlet_path }}/postgres-wikijs.container"
+    owner: "{{ podman_user }}"
+    group: "{{ podman_user }}"
+    mode: '0644'
+  become: true
+  notify: restart wikijs-pod
+
+- name: Deploy Quadlet wikijs
+  ansible.builtin.template:
+    src: wikijs.container.j2
+    dest: "{{ quadlet_path }}/wikijs.container"
+    owner: "{{ podman_user }}"
+    group: "{{ podman_user }}"
+    mode: '0644'
+  become: true
+  notify: restart wikijs-pod

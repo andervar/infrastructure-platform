@@ -1,0 +1,14 @@
+---
+- name: Permissions for postgres-data volume (UID 999)
+  ansible.builtin.command:
+    cmd: podman unshare chown -R 999:999 /home/{{ podman_user }}/containers/volumes/postgres-data
+  become: true
+  become_user: "{{ podman_user }}"
+  changed_when: false
+
+- name: Permissions for wikijs-data volume (UID 1000)
+  ansible.builtin.command:
+    cmd: podman unshare chown -R 1000:1000 /home/{{ podman_user }}/containers/volumes/wikijs-data
+  become: true
+  become_user: "{{ podman_user }}"
+  changed_when: false

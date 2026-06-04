@@ -36,14 +36,3 @@ nat_policy:
 
 # IP Forwarding
 ip_forward: true
-
-# Host entries
-hosts_entries:
-  - ip: "{{ nat_interfaces.internal.ip }}"
-    name: "nat"
-  - ip: "192.168.216.4"
-    name: "proxy"
-  - ip: "192.168.216.8"
-    name: "pods"
-  - ip: "192.168.216.9"
-    name: "redis"

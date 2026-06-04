@@ -66,8 +66,8 @@ haproxy_ssl:
   san_ips:
     - "{{ proxy_interfaces.public.ip }}"
   san_dns:
-    - "glpi.local"
-    - "wiki.local"
+    - "glpi.infra.local"
+    - "wiki.infra.local"
   days: 365
   key_size: 2048
 
@@ -96,8 +96,8 @@ haproxy:
     https-in:
       bind: ":443"
       domains:
-        glpi: "glpi.local"
-        wikijs: "wiki.local"
+        glpi: "glpi.infra.local"
+        wikijs: "wiki.infra.local"
       default_backend: glpi
     
     wikijs-https-in:

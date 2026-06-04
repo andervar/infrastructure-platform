@@ -7,7 +7,7 @@
   tags: [common]
 
 - name: Redis configuration
-  hosts: cache
+  hosts: cache_hosts
   gather_facts: false
   roles:
     - redis
@@ -40,3 +40,21 @@
   roles:
     - wikijs_pod
   tags: [wikijs, containers]
+
+- name: FreeIPA server configuration
+  hosts: ipa_hosts
+  gather_facts: false
+  roles:
+    - freeipa_server
+  tags: [freeipa, identity]
+
+- name: FreeIPA client configuration
+  hosts:
+      - control_hosts
+      - proxy_hosts
+      - container_hosts
+      - cache_hosts
+  gather_facts: false
+  roles:
+    - freeipa_client
+  tags: [freeipa, identity]

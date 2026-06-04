@@ -76,8 +76,8 @@ Complete automation of infrastructure deployment and configuration using **Ansib
 
 ## Contact Information
 
-* **Nombre:** Anderson Vargas Navarro
-* **Carnet:** C28183
-* [**Correo Institucional**](mailto:anderson.vargasnavarro@ucr.ac.cr)
-* [**Correo Personal**](mailto:vargasnavarroander@gmail.com)
-* [**Linkedin**](https://www.linkedin.com/in/anderson-vargas-navarro/)
+* **Name:** Anderson Vargas Navarro
+* **Student ID:** C28183
+* [**Institutional Email**](mailto:anderson.vargasnavarro@ucr.ac.cr)
+* [**Personal Email**](mailto:vargasnavarroander@gmail.com)
+* [**LinkedIn**](https://www.linkedin.com/in/anderson-vargas-navarro/)

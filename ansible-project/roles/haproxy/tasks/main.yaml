@@ -7,14 +7,14 @@
 
 - name: Ensure SSL directories exist with correct permissions
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: "{{ item.path }}"
     state: directory
     owner: root
     group: root
-    mode: '0700'
+    mode: "{{ item.mode }}"
   loop:
-    - /etc/ssl/private
-    - /etc/ssl/certs
+    - { path: /etc/ssl/private, mode: '0700' }
+    - { path: /etc/ssl/certs,   mode: '0755' }
 
 - name: Set secure permissions on private directory
   ansible.builtin.file:

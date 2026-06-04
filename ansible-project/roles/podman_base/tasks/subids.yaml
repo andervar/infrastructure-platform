@@ -1,0 +1,26 @@
+---
+- name: Check if subuid is configured for user
+  ansible.builtin.command:
+    cmd: grep -c "{{ podman_user }}" /etc/subuid
+  register: subuid_check
+  changed_when: false
+  become: true
+
+- name: Check if subgid is configured for user
+  ansible.builtin.command:
+    cmd: grep -c "{{ podman_user }}" /etc/subgid
+  register: subgid_check
+  changed_when: false
+  become: true
+
+- name: Configure subuid for rootless Podman
+  ansible.builtin.command:
+    cmd: usermod --add-subuids 100000-165535 {{ podman_user }}
+  become: true
+  when: subuid_check.stdout | int == 0
+
+- name: Configure subgid for rootless Podman
+  ansible.builtin.command:
+    cmd: usermod --add-subgids 100000-165535 {{ podman_user }}
+  become: true
+  when: subgid_check.stdout | int == 0

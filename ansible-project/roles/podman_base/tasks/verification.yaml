@@ -1,0 +1,11 @@
+---
+- name: Verify Podman installation
+  ansible.builtin.command: podman --version
+  register: podman_version
+  changed_when: false
+  become: true
+  become_user: "{{ podman_user }}"
+
+- name: Display Podman version
+  ansible.builtin.debug:
+    msg: "Podman version: {{ podman_version.stdout }}"

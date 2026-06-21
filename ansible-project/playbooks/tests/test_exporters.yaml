@@ -1,0 +1,6 @@
+---
+- name: Test Exporters Role
+  hosts: all
+  gather_facts: true
+  roles:
+    - exporters

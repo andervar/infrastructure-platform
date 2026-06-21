@@ -1,0 +1,135 @@
+---
+- name: "[{{ exporter.service }}] Create system group"
+  ansible.builtin.group:
+    name: "{{ exporter.group }}"
+    system: true
+    state: present
+
+- name: "[{{ exporter.service }}] Create system user"
+  ansible.builtin.user:
+    name: "{{ exporter.user }}"
+    group: "{{ exporter.group }}"
+    shell: /sbin/nologin
+    home: "/var/lib/{{ exporter.service }}"
+    create_home: false
+    system: true
+    state: present
+
+- name: "[{{ exporter.service }}] Check if binary exists"
+  ansible.builtin.stat:
+    path: "{{ exporter.binary }}"
+  register: exporter_binary
+
+- name: "[{{ exporter.service }}] Download archive"
+  ansible.builtin.get_url:
+    url: "{{ exporter.download_url }}"
+    dest: "{{ exporter.tmp_path }}"
+    checksum: "{{ exporter.checksum }}"
+    mode: "0644"
+    force: false
+  register: download_result
+  when: not exporter_binary.stat.exists
+
+- name: "[{{ exporter.service }}] Extract archive"
+  ansible.builtin.unarchive:
+    src: "{{ exporter.tmp_path }}"
+    dest: /tmp
+    remote_src: true
+    creates: "/tmp/{{ exporter.extract_dir }}/{{ exporter.binary_name }}"
+  register: extract_result
+  when:
+    - not ansible_check_mode
+    - not exporter_binary.stat.exists
+
+- name: "[{{ exporter.service }}] Install binary"
+  ansible.builtin.copy:
+    src: "/tmp/{{ exporter.extract_dir }}/{{ exporter.binary_name }}"
+    dest: "{{ exporter.binary }}"
+    owner: root
+    group: root
+    mode: "0755"
+    remote_src: true
+  notify: "Restart {{ exporter.service }}"
+  when:
+    - not ansible_check_mode
+    - extract_result is changed
+
+- name: "[{{ exporter.service }}] Remove downloaded archive"
+  ansible.builtin.file:
+    path: "{{ exporter.tmp_path }}"
+    state: absent
+  when:
+    - not ansible_check_mode
+    - download_result is changed or extract_result is changed
+
+- name: "[{{ exporter.service }}] Remove extracted directory"
+  ansible.builtin.file:
+    path: "/tmp/{{ exporter.extract_dir }}"
+    state: absent
+  when:
+    - not ansible_check_mode
+    - extract_result is changed
+
+- name: "[{{ exporter.service }}] Create environment directory"
+  ansible.builtin.file:
+    path: "/etc/{{ exporter.service }}"
+    state: directory
+    owner: root
+    group: "{{ exporter.group }}"
+    mode: "0750"
+  when: exporter.environment | length > 0
+
+- name: "[{{ exporter.service }}] Deploy environment file"
+  ansible.builtin.template:
+    src: exporter.env.j2
+    dest: "/etc/{{ exporter.service }}/{{ exporter.service }}.env"
+    owner: root
+    group: "{{ exporter.group }}"
+    mode: "0640"
+  when: exporter.environment | length > 0
+  notify: "Restart {{ exporter.service }}"
+
+- name: "[{{ exporter.service }}] Create config directory"
+  ansible.builtin.file:
+    path: "/etc/{{ exporter.service }}"
+    state: directory
+    owner: root
+    group: "{{ exporter.group }}"
+    mode: "0750"
+  when: exporter.my_cnf_path is defined
+
+- name: "[{{ exporter.service }}] Deploy .my.cnf"
+  ansible.builtin.template:
+    src: my.cnf.j2
+    dest: "{{ exporter.my_cnf_path }}"
+    owner: "{{ exporter.user }}"
+    group: "{{ exporter.group }}"
+    mode: "0600"
+  when: exporter.my_cnf_path is defined
+  notify: "Restart {{ exporter.service }}"
+
+- name: "[{{ exporter.service }}] Deploy systemd unit"
+  ansible.builtin.template:
+    src: exporter.service.j2
+    dest: "/etc/systemd/system/{{ exporter.service }}.service"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: "Restart {{ exporter.service }}"
+  when: not ansible_check_mode
+
+- name: "[{{ exporter.service }}] Enable and start service"
+  ansible.builtin.systemd:
+    name: "{{ exporter.service }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: not ansible_check_mode
+
+- name: "[{{ exporter.service }}] Verify metrics endpoint"
+  ansible.builtin.uri:
+    url: "http://{{ exporter.listen_address }}:{{ exporter.port }}/metrics"
+    status_code: 200
+    timeout: 10
+  check_mode: false
+  when: not ansible_check_mode

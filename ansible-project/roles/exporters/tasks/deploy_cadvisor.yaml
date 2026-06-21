@@ -1,0 +1,85 @@
+---
+- name: "[{{ cadvisor.service }}] Get UID of podman user"
+  ansible.builtin.command: id -u {{ podman_user }}
+  register: podman_uid_result
+  changed_when: false
+
+- name: "[{{ cadvisor.service }}] Set podman_uid fact"
+  ansible.builtin.set_fact:
+    podman_uid: "{{ podman_uid_result.stdout }}"
+
+- name: "[{{ cadvisor.service }}] Verify podman.sock exists before deploying"
+  ansible.builtin.stat:
+    path: "/run/user/{{ podman_uid }}/podman/podman.sock"
+  register: podman_socket_check
+
+- name: "[{{ cadvisor.service }}] Fail if podman.sock is missing"
+  ansible.builtin.fail:
+    msg: >-
+      El socket de Podman rootless no existe en
+      /run/user/{{ podman_uid }}/podman/podman.sock.
+      Ejecuta el rol podman_base (tag: podman_socket) antes de desplegar cadvisor.
+  when: not podman_socket_check.stat.exists
+
+- name: "[{{ cadvisor.service }}] Check if binary exists"
+  ansible.builtin.stat:
+    path: "{{ cadvisor.binary }}"
+  register: cadvisor_binary
+
+- name: "[{{ cadvisor.service }}] Download binary"
+  ansible.builtin.get_url:
+    url: "{{ cadvisor.download_url }}"
+    dest: "{{ cadvisor.tmp_path }}"
+    checksum: "{{ cadvisor.checksum }}"
+    mode: "0755"
+    timeout: 120
+    force: false
+  register: cadvisor_download
+  when: not cadvisor_binary.stat.exists
+
+- name: "[{{ cadvisor.service }}] Install binary"
+  ansible.builtin.copy:
+    src: "{{ cadvisor.tmp_path }}"
+    dest: "{{ cadvisor.binary }}"
+    owner: root
+    group: root
+    mode: "0755"
+    remote_src: true
+  notify: "Restart {{ cadvisor.service }}"
+  when:
+    - not ansible_check_mode
+    - cadvisor_download is changed
+
+- name: "[{{ cadvisor.service }}] Remove downloaded binary from /tmp"
+  ansible.builtin.file:
+    path: "{{ cadvisor.tmp_path }}"
+    state: absent
+  when:
+    - not ansible_check_mode
+    - cadvisor_download is changed
+
+- name: "[{{ cadvisor.service }}] Deploy systemd unit"
+  ansible.builtin.template:
+    src: cadvisor.service.j2
+    dest: "/etc/systemd/system/{{ cadvisor.service }}.service"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: "Restart {{ cadvisor.service }}"
+  when: not ansible_check_mode
+
+- name: "[{{ cadvisor.service }}] Enable and start service"
+  ansible.builtin.systemd:
+    name: "{{ cadvisor.service }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: not ansible_check_mode
+
+- name: "[{{ cadvisor.service }}] Verify /healthz endpoint"
+  ansible.builtin.uri:
+    url: "http://{{ cadvisor.listen_address }}:{{ cadvisor.port }}/healthz"
+    status_code: 200
+    timeout: 15
+  check_mode: false
+  when: not ansible_check_mode

@@ -22,34 +22,59 @@ defaults
     option forwardfor
 
 #---------------------------------------------------------------------
-# FRONTENDS (HTTP to HTTPS redirect)
+# HTTP Redirect
 #---------------------------------------------------------------------
 frontend http-in
     bind {{ haproxy.frontends.http.bind | default(':80') }}
     redirect scheme https if !{ ssl_fc }
 
 #---------------------------------------------------------------------
-# FRONTENDS HTTPS
+# FRONTENDS
 #---------------------------------------------------------------------
 {% for frontend_name, frontend_config in haproxy.frontends.items() if frontend_name != 'http' %}
 frontend {{ frontend_name }}
-    bind {{ frontend_config.bind }} ssl crt {{ haproxy.ssl_cert_path }}
-    mode http
-    option httplog
 
+{% if frontend_config.ssl | default(true) %}
+    bind {{ frontend_config.bind }} ssl crt {{ haproxy.ssl_cert_path }}
+{% else %}
+    bind {{ frontend_config.bind }}
+{% endif %}
+
+    mode {{ frontend_config.mode | default('http') }}
+
+{% if frontend_config.options is defined %}
+{% for option in frontend_config.options %}
+    option {{ option }}
+{% endfor %}
+{% else %}
+    option httplog
+{% endif %}
+
+{% if frontend_config.ssl | default(true) %}
     http-request set-header X-Forwarded-Proto https
     http-request set-header X-Forwarded-Host %[req.hdr(host)]
     http-request set-header X-Real-IP %[src]
+{% endif %}
+
+{% if frontend_config.http_request is defined %}
+{% for rule in frontend_config.http_request %}
+    http-request {{ rule }}
+{% endfor %}
+{% endif %}
 
 {% if frontend_config.domains is defined %}
 {% for backend_name, domain in frontend_config.domains.items() %}
     acl is_{{ backend_name }} hdr(host) -i {{ domain }}
 {% endfor %}
+
 {% for backend_name, domain in frontend_config.domains.items() %}
     use_backend {{ backend_name }}_backend if is_{{ backend_name }}
 {% endfor %}
 {% endif %}
+
+{% if frontend_config.default_backend is defined %}
     default_backend {{ frontend_config.default_backend }}_backend
+{% endif %}
 
 {% endfor %}
 
@@ -59,8 +84,13 @@ frontend {{ frontend_name }}
 {% for backend_name, backend_config in haproxy.backends.items() %}
 backend {{ backend_name }}_backend
     mode http
-    option httpchk GET {{ backend_config.health_check_path | default('/') }}
+
+{% if backend_config.health_check_path | default('') != '' %}
+    option httpchk GET {{ backend_config.health_check_path }}
+{% endif %}
+
     http-check expect status {{ backend_config.health_check_status | default(200) }}
+
 {% for server_name, server_config in backend_config.servers.items() %}
     server {{ server_name }} {{ server_config.address }}:{{ server_config.port }} check inter {{ server_config.check_interval | default('10s') }} fall {{ server_config.fall | default(3) }} rise {{ server_config.rise | default(2) }}
 {% endfor %}

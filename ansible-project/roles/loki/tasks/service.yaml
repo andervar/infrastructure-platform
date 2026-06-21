@@ -1,0 +1,18 @@
+---
+- name: Deploy systemd unit file
+  ansible.builtin.template:
+    src: loki.service.j2
+    dest: /etc/systemd/system/loki.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart loki
+  when: not ansible_check_mode
+
+- name: Enable and start service
+  ansible.builtin.systemd:
+    name: loki
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: not ansible_check_mode

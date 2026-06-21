@@ -1,0 +1,38 @@
+---
+- name: Create provisioning alerting directory
+  ansible.builtin.file:
+    path: "{{ grafana_provisioning_dir }}/alerting"
+    state: directory
+    owner: root
+    group: grafana
+    mode: "0750"
+
+- name: Deploy contact points (email + Telegram)
+  ansible.builtin.template:
+    src: contact-points.yaml.j2
+    dest: "{{ grafana_provisioning_dir }}/alerting/contact-points.yaml"
+    owner: root
+    group: grafana
+    mode: "0640"
+  notify: Restart grafana-server
+  when: not ansible_check_mode
+
+- name: Deploy notification policies
+  ansible.builtin.template:
+    src: notification-policies.yaml.j2
+    dest: "{{ grafana_provisioning_dir }}/alerting/notification-policies.yaml"
+    owner: root
+    group: grafana
+    mode: "0640"
+  notify: Restart grafana-server
+  when: not ansible_check_mode
+
+- name: Deploy alert rules
+  ansible.builtin.template:
+    src: alert-rules.yaml.j2
+    dest: "{{ grafana_provisioning_dir }}/alerting/alert-rules.yaml"
+    owner: root
+    group: grafana
+    mode: "0640"
+  when: grafana_alert_rules | length > 0 and not ansible_check_mode
+  notify: Restart grafana-server

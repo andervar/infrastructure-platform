@@ -1,0 +1,10 @@
+---
+- name: Deploy loki-config.yaml
+  ansible.builtin.template:
+    src: loki-config.yaml.j2
+    dest: "{{ loki_config_path }}"
+    owner: root
+    group: "{{ loki_group }}"
+    mode: "0640"
+  notify: Restart loki
+  when: not ansible_check_mode

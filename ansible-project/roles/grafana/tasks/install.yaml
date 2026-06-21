@@ -1,0 +1,20 @@
+---
+- name: Add Grafana GPG key
+  ansible.builtin.rpm_key:
+    key: "{{ grafana_repo_gpgkey }}"
+    state: present
+
+- name: Add Grafana yum repository
+  ansible.builtin.yum_repository:
+    name: grafana
+    description: Grafana Repository
+    baseurl: "{{ grafana_repo_baseurl }}"
+    gpgcheck: true
+    gpgkey: "{{ grafana_repo_gpgkey }}"
+    enabled: true
+
+- name: Install grafana package
+  ansible.builtin.dnf:
+    name: grafana
+    state: present
+    update_cache: true

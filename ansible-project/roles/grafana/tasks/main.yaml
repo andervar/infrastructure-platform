@@ -1,0 +1,24 @@
+---
+- name: Install Grafana
+  ansible.builtin.include_tasks: install.yaml
+  tags: [grafana, install]
+
+- name: Configure Grafana
+  ansible.builtin.include_tasks: config.yaml
+  tags: [grafana, configuration]
+
+- name: Configure Grafana datasources
+  ansible.builtin.include_tasks: datasources.yaml
+  tags: [grafana, datasources]
+
+- name: Configure Grafana alerts
+  ansible.builtin.include_tasks: alerts.yaml
+  tags: [grafana, alerts]
+
+- name: Manage Grafana service
+  ansible.builtin.include_tasks: service.yaml
+  tags: [grafana, service]
+
+- name: Verify Grafana installation
+  ansible.builtin.include_tasks: verify.yaml
+  tags: [grafana, verify]

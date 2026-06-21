@@ -1,0 +1,12 @@
+--- 
+- name: Wait for Grafana to be ready
+  ansible.builtin.uri:
+    url: "http://localhost:{{ grafana_http_port }}/api/health"
+    status_code: 200
+    timeout: 20
+  register: grafana_health
+  retries: 6
+  delay: 5
+  until: grafana_health.status == 200
+  check_mode: false
+  when: not ansible_check_mode

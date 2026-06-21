@@ -1,0 +1,9 @@
+- name: Deploy grafana.ini
+  ansible.builtin.template:
+    src: grafana.ini.j2
+    dest: "{{ grafana_config_path }}"
+    owner: root
+    group: grafana
+    mode: "0640"
+  notify: Restart grafana-server
+  when: not ansible_check_mode

@@ -9,3 +9,14 @@ vault_redis_password: "<PASSWORD_REDIS>"
 # FreeIPA passwords
 vault_ipa_admin_password: "<PASSWORD_IPADM>"
 vault_ipa_ds_password: "<PASSWORD_IPADS>"
+
+# Grafana
+vault_grafana_admin_password: "<PASSWORD_GRAFANA_ADMIN>"
+
+# c SMTP
+vault_smtp_user: "<EMAIL_ADDRESS>"
+vault_smtp_password: "<PASSWORD_SMTP>"
+
+# Telegram
+vault_telegram_bot_token: "<TELEGRAM_BOT_TOKEN>"
+vault_telegram_chat_id: "<TELEGRAM_CHAT_ID>"

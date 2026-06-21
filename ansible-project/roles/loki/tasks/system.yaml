@@ -1,0 +1,32 @@
+---
+- name: Create system group
+  ansible.builtin.group:
+    name: "{{ loki_group }}"
+    system: true
+    state: present
+
+- name: Create system user
+  ansible.builtin.user:
+    name: "{{ loki_user }}"
+    group: "{{ loki_group }}"
+    shell: /sbin/nologin
+    home: "{{ loki_data_dir }}"
+    create_home: false
+    system: true
+    state: present
+
+- name: Create config directory
+  ansible.builtin.file:
+    path: "{{ loki_config_dir }}"
+    state: directory
+    owner: root
+    group: "{{ loki_group }}"
+    mode: "0750"
+
+- name: Create data directory
+  ansible.builtin.file:
+    path: "{{ loki_data_dir }}"
+    state: directory
+    owner: "{{ loki_user }}"
+    group: "{{ loki_group }}"
+    mode: "0750"

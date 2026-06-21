@@ -10,7 +10,9 @@ glpi_env_file: "containers/configs/glpi/glpi.env"
 mariadb_config_file: "containers/configs/mariadb/glpi.cnf"
 
 # Pod configuration
-glpi_pod_publish_port: "8080:80"
+glpi_pod_publish_ports:
+  - "8080:80"
+  - "127.0.0.1:3306:3306"
 
 # Volume paths (relative to /home/{{ podman_user }})
 glpi_volumes:

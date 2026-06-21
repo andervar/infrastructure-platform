@@ -15,3 +15,8 @@
 - name: Verify Podman installation
   ansible.builtin.include_tasks: verification.yaml
   tags: [podman_base, verification]
+
+- name: Enable rootless podman API socket
+  ansible.builtin.include_tasks:
+    file: enable_podman_socket.yaml
+  tags: [podman_base, podman_socket]

@@ -1,0 +1,30 @@
+---
+loki_version: "3.7.0"
+loki_user: "loki"
+loki_group: "loki"
+
+loki_binary: "/usr/local/bin/loki"
+loki_config_dir: "/etc/loki"
+loki_config_path: "{{ loki_config_dir }}/loki-config.yaml"
+loki_data_dir: "/var/lib/loki"
+
+loki_http_listen_port: 3100
+loki_grpc_listen_port: 9096
+loki_listen_address: "0.0.0.0"
+
+loki_download_url: >-
+  https://github.com/grafana/loki/releases/download/v{{ loki_version }}/loki-linux-amd64.zip
+loki_tmp_path: "/tmp/loki-linux-amd64.zip"
+loki_checksum: "sha256:856e6fe780f963ea26ed0b3d5eec097c7f5964ef984e8505e3f98a5ef7a0b7ca"
+
+# Log retention period (hours)
+loki_retention_period: "168h"
+
+# Allow sources that can send logs to Loki
+loki_allowed_sources:
+  - "192.168.216.1"    # nat
+  - "192.168.216.4"    # proxy
+  - "192.168.216.8"    # pods
+  - "192.168.216.9"    # redis
+  - "192.168.216.10"   # freeipa
+loki_firewall_zone: "internal"

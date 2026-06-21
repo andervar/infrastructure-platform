@@ -37,13 +37,29 @@
     loop_var: zone_result
     label: "{{ zone_result.item.key }}"
 
-- name: Assign interfaces to zones
-  ansible.posix.firewalld:
-    zone: "{{ item.key }}"
-    interface: "{{ item.value.interface }}"
-    permanent: true
-    state: enabled
+- name: Check current permanent zone of interfaces
+  ansible.builtin.command:
+    cmd: "firewall-cmd --permanent --get-zone-of-interface={{ item.value.interface }}"
   loop: "{{ firewall_zones | dict2items }}"
+  register: current_interface_zones
+  failed_when: false
+  changed_when: false
+  when: not ansible_check_mode
+
+
+- name: DEBUG - show current_interface_zones results
+  ansible.builtin.debug:
+    var: current_interface_zones.results
+
+- name: Move interface to zone via firewall-cmd only if needed
+  ansible.builtin.command:
+    cmd: "firewall-cmd --permanent --zone={{ item.item.key }} --change-interface={{ item.item.value.interface }}"
+  loop: "{{ current_interface_zones.results }}"
+  loop_control:
+    label: "interface: {{ item.item.value.interface }} -> zone: {{ item.item.key }}"
+  when:
+    - not ansible_check_mode
+    - item.stdout != item.item.key
   notify: reload firewalld
 
 - name: Configure services by zone
@@ -54,6 +70,7 @@
     state: enabled
   loop: "{{ firewall_zones | dict2items | subelements('value.services', skip_missing=True) }}"
   notify: reload firewalld
+  when: not ansible_check_mode
 
 - name: Configure ports by zone
   ansible.posix.firewalld:
@@ -63,6 +80,7 @@
     state: enabled
   loop: "{{ firewall_zones | dict2items | subelements('value.ports', skip_missing=True) }}"
   notify: reload firewalld
+  when: not ansible_check_mode
 
 - name: Configure masquerade by zone
   ansible.posix.firewalld:
@@ -74,6 +92,7 @@
   when:
     - item.value.masquerade is defined
     - item.value.masquerade
+    - not ansible_check_mode
   notify: reload firewalld
 
 - name: Configure rich rules by zone
@@ -84,3 +103,4 @@
     state: enabled
   loop: "{{ firewall_zones | dict2items | subelements('value.rich_rules', skip_missing=True) }}"
   notify: reload firewalld
+  when: not ansible_check_mode

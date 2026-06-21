@@ -1,0 +1,45 @@
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: infra-alerts
+    folder: Infraestructura
+    interval: 1m
+    rules:
+{% for rule in grafana_alert_rules %}
+      - uid: {{ rule.uid }}
+        title: "{{ rule.title }}"
+        condition: {{ rule.condition }}
+        for: {{ rule.for }}
+        labels:
+          severity: {{ rule.severity }}
+        annotations:
+          summary: "{{ rule.title }}"
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: {{ rule.datasource | default('prometheus') }}
+            model:
+              expr: '{{ rule.expr }}'
+{% if rule.datasource is defined and rule.datasource == 'loki' %}
+              queryType: range
+{% else %}
+              instant: true
+{% endif %}
+              refId: A
+          - refId: {{ rule.condition }}
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - {{ rule.threshold }}
+              refId: {{ rule.condition }}
+{% endfor %}

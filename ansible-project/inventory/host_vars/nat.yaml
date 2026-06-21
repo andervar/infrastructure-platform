@@ -24,6 +24,8 @@ firewall_zones:
   internal:
     interface: "{{ nat_interfaces.internal.interface }}"
     services: []
+    ports:
+      - "9100/tcp" # Node Exporter
     masquerade: false
 
 # NAT policy

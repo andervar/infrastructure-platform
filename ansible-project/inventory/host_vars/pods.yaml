@@ -34,15 +34,20 @@ firewall_zones:
   internal:
     interface: "{{ pods_interfaces.internal.interface }}"
     services: ["ssh"]
+    ports:
+      - "9100/tcp" # Node Exporter
+      - "8081/tcp" # cAdvisor
+      - "9104/tcp" # MySQL Exporter
+      - "9187/tcp" # Postgres Exporter
     masquerade: false
 
   application:
     interface: "{{ pods_interfaces.application.interface }}"
     services: []
+    ports:
+      - "8080/tcp" # GLPI
+      - "3000/tcp" # Wiki.js
     masquerade: false
-    rich_rules:
-      - 'rule family="ipv4" source address="{{ allowed_sources.proxy.address }}/24" port port="8080" protocol="tcp" accept'
-      - 'rule family="ipv4" source address="{{ allowed_sources.proxy.address }}/24" port port="3000" protocol="tcp" accept'
 
   appredis:
     interface: "{{ pods_interfaces.appredis.interface }}"
@@ -82,3 +87,9 @@ mariadb_max_connections: 100
 mariadb_buffer_pool_size: "256M"
 mariadb_slow_query_log: 1
 mariadb_long_query_time: 2
+
+fluent_bit_extra_systemd_units:
+  - glpi.service
+  - mariadb.service
+  - wikijs.service
+  - postgres-wikijs.service

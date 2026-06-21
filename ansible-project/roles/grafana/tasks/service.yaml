@@ -1,0 +1,7 @@
+---
+- name: Enable and start service
+  ansible.builtin.systemd:
+    name: grafana-server
+    enabled: true
+    state: started
+  when: not ansible_check_mode

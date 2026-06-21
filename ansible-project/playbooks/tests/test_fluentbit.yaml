@@ -1,0 +1,6 @@
+---
+- name: Test Fluent Bit Role
+  hosts: all
+  gather_facts: true
+  roles:
+    - fluentbit

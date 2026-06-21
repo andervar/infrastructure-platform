@@ -1,0 +1,20 @@
+---
+- name: Prepare Prometheus system account and directories
+  ansible.builtin.include_tasks: system.yaml
+  tags: [prometheus, system]
+
+- name: Install Prometheus binaries
+  ansible.builtin.include_tasks: install.yaml
+  tags: [prometheus, install]
+
+- name: Configure Prometheus
+  ansible.builtin.include_tasks: config.yaml
+  tags: [prometheus, config]
+
+- name: Manage Prometheus service
+  ansible.builtin.include_tasks: service.yaml
+  tags: [prometheus, service]
+
+- name: Verify Prometheus
+  ansible.builtin.include_tasks: verify.yaml
+  tags: [prometheus, verify]

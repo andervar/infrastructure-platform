@@ -1,0 +1,11 @@
+---
+- name: Verify prometheus is responding
+  ansible.builtin.uri:
+    url: "http://{{ prometheus_listen_address }}:{{ prometheus_port }}/-/healthy"
+    method: GET
+    status_code: 200
+  retries: 5
+  delay: 5
+  register: prometheus_health
+  until: prometheus_health.status == 200
+  when: not ansible_check_mode

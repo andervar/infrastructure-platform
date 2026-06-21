@@ -1,0 +1,37 @@
+---
+# Fluent Bit configuration defaults
+fluent_bit_package: fluent-bit
+fluent_bit_service: fluent-bit
+
+fluent_bit_config_dir: /etc/fluent-bit
+fluent_bit_config_path: "{{ fluent_bit_config_dir }}/fluent-bit.conf"
+fluent_bit_binary: /opt/fluent-bit/bin/fluent-bit
+fluent_bit_data_dir: /var/lib/fluent-bit
+
+# Repository configuration for Fluent Bit
+fluent_bit_repo_name: fluent-bit
+fluent_bit_repo_description: Fluent Bit
+
+fluent_bit_repo_baseurl: https://packages.fluentbit.io/rockylinux/9/
+fluent_bit_repo_gpgkey: https://packages.fluentbit.io/fluentbit.key
+
+fluent_bit_repo_gpgcheck: true
+fluent_bit_repo_repo_gpgcheck: true
+
+# Loki destination configuration
+fluent_bit_loki_host: 192.168.216.11
+fluent_bit_loki_port: 3100
+
+# Global inputs
+fluent_bit_systemd_units:
+  - sshd.service
+  - firewalld.service
+fluent_bit_tail_paths:
+  - /var/log/messages
+  - /var/log/secure
+
+# Additional inputs, overridden per host in host_vars/
+fluent_bit_extra_systemd_units: []
+fluent_bit_extra_tail_paths: []
+fluent_bit_labels:
+  host: "{{ inventory_hostname }}"

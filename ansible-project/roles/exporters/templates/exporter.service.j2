@@ -1,0 +1,37 @@
+[Unit]
+Description=Prometheus {{ exporter.service | replace('_', ' ') | title }}
+Documentation={{ exporter.documentation }}
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+User={{ exporter.user }}
+Group={{ exporter.group }}
+
+{% if exporter.environment | length > 0 %}
+EnvironmentFile=/etc/{{ exporter.service }}/{{ exporter.service }}.env
+{% endif %}
+
+ExecStart={{ exporter.binary }} \
+{% if exporter.my_cnf_path is defined %}
+  --config.my-cnf={{ exporter.my_cnf_path }} \
+{% endif %}
+{% for arg in exporter.extra_args %}
+  {{ arg }} \
+{% endfor %}
+  --web.listen-address={{ exporter.listen_address }}:{{ exporter.port }}
+
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+CapabilityBoundingSet=
+
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

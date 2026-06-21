@@ -1,0 +1,7 @@
+---
+- name: Enable and start Fluent Bit service
+  ansible.builtin.systemd:
+    name: fluent-bit
+    enabled: true
+    state: started
+  when: not ansible_check_mode

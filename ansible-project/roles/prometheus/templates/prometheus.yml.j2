@@ -1,0 +1,22 @@
+global:
+  scrape_interval: {{ prometheus_scrape_interval }}
+  external_labels:
+    environment: "infra"
+
+scrape_configs:
+{% for job in prometheus_scrape_jobs %}
+- job_name: "{{ job.job_name }}"
+  static_configs:
+{% for config in job.static_configs %}
+    - targets:
+{% for target in config.targets %}
+        - "{{ target }}"
+{% endfor %}
+{% if config.labels is defined %}
+      labels:
+{% for key, value in config.labels.items() %}
+        {{ key }}: "{{ value }}"
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endfor %}

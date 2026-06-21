@@ -1,0 +1,28 @@
+---
+- name: Create provisioning datasources directory
+  ansible.builtin.file:
+    path: "{{ grafana_provisioning_dir }}/datasources"
+    state: directory
+    owner: root
+    group: grafana
+    mode: "0750"
+
+- name: Deploy Prometheus datasource
+  ansible.builtin.template:
+    src: datasource-prometheus.yaml.j2
+    dest: "{{ grafana_provisioning_dir }}/datasources/prometheus.yaml"
+    owner: root
+    group: grafana
+    mode: "0640"
+  notify: Restart grafana-server
+  when: not ansible_check_mode
+
+- name: Deploy Loki datasource
+  ansible.builtin.template:
+    src: datasource-loki.yaml.j2
+    dest: "{{ grafana_provisioning_dir }}/datasources/loki.yaml"
+    owner: root
+    group: grafana
+    mode: "0640"
+  notify: Restart grafana-server
+  when: not ansible_check_mode

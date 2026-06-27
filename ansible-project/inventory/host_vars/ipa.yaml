@@ -26,18 +26,16 @@ firewall_zones:
     services:
       - ssh
     ports:
-      # LDAP/LDAPS
-      - "389/tcp"
-      - "636/tcp"
-      # Kerberos
-      - "88/tcp"
-      - "88/udp"
-      # kpasswd
-      - "464/tcp"
-      - "464/udp"
-      # DNS
-      - "53/tcp"
-      - "53/udp"
-      # NTP
-      - "123/udp"
+      - "389/tcp" # LDAP
+      - "636/tcp" # LDAPS
+      - "88/tcp" # Kerberos
+      - "88/udp" # Kerberos
+      - "464/tcp" # kpasswd
+      - "464/udp" # kpasswd
+      - "53/tcp" # DNS
+      - "53/udp" # DNS
+      - "123/udp" # NTP
+      - "9100/tcp" # Node Exporter
     masquerade: false
+
+exporters_node_exporter_listen_address: "{{ ipa_interfaces.internal.ip }}"

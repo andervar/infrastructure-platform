@@ -13,25 +13,23 @@ redis_interfaces:
     ip: "192.168.219.1"
     netmask: "24"
     zone: appredis
-    
-# Allowed sources for firewall rules
-allowed_sources:
-  pods:
-    address: "192.168.219.2"
-
+  
 # Firewall zones
 firewall_zones:
   internal:
     interface: "{{ redis_interfaces.internal.interface }}"
     services: ["ssh"]
+    ports:
+      - "9100/tcp" # Node Exporter 
+      - "9121/tcp" # Redis Exporter
     masquerade: false
   
   appredis:
     interface: "{{ redis_interfaces.appredis.interface }}"
     services: []
+    ports:
+      - "{{ redis.port }}/tcp" # Redis
     masquerade: false
-    rich_rules:
-      - 'rule family="ipv4" source address="{{ allowed_sources.pods.address }}/32" port port="{{ redis.port }}" protocol="tcp" accept'
 
 # Redis configuration
 redis:
@@ -66,3 +64,7 @@ redis:
   # Config file paths
   config_file: "/etc/redis/redis.conf"
   config_backup: "/etc/redis/redis.conf.bak"
+
+fluent_bit_extra_tail_paths:
+  - tag: redis.log
+    path: /var/log/redis/redis.log

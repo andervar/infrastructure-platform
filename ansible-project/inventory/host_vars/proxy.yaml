@@ -20,6 +20,12 @@ proxy_interfaces:
     netmask: "24"
     zone: application
 
+  monitorproxy:
+    interface: ens161
+    ip: "192.168.217.1"
+    netmask: "24"
+    zone: monitorproxy
+
 # Firewall zones
 firewall_zones:
   public:
@@ -31,15 +37,26 @@ firewall_zones:
   internal:
     interface: "{{ proxy_interfaces.internal.interface }}"
     services: ["ssh"]
+    ports:
+      - "9100/tcp" # Node Exporter
+      - "9101/tcp" # HAProxy Exporter
     masquerade: false
 
   application:
     interface: "{{ proxy_interfaces.application.interface }}"
     services: []
+    ports:
+      - "{{ backend_servers.glpi.port }}/tcp" # GLPI
+      - "{{ backend_servers.wikijs.port }}/tcp" # Wiki.js
     masquerade: false
-    rich_rules:
-      - 'rule family="ipv4" destination address="{{ backend_servers.glpi.address }}" port port="{{ backend_servers.glpi.port }}" protocol="tcp" accept'
-      - 'rule family="ipv4" destination address="{{ backend_servers.wikijs.address }}" port port="{{ backend_servers.wikijs.port }}" protocol="tcp" accept'
+
+  monitorproxy:
+    interface: "{{ proxy_interfaces.monitorproxy.interface }}"
+    services: []
+    ports:
+      - "3000/tcp" # Grafana
+    forward: false
+    masquerade: false
 
 # Backend servers
 backend_servers:
@@ -49,6 +66,10 @@ backend_servers:
   wikijs:
     address: "192.168.218.2"
     port: "3000"
+  grafana:
+    address: "192.168.217.2"
+    port: "3000"
+
 
 # SSL certificate generation parameters
 haproxy_ssl:
@@ -68,6 +89,7 @@ haproxy_ssl:
   san_dns:
     - "glpi.infra.local"
     - "wiki.infra.local"
+    - "proxy.infra.local"
   days: 365
   key_size: 2048
 
@@ -90,19 +112,33 @@ haproxy:
 
   frontends:
     http:
-      bind: ":80"
+      bind: "{{ proxy_interfaces.public.ip }}:80"
       redirect_https: true
 
     https-in:
-      bind: ":443"
+      bind: "{{ proxy_interfaces.public.ip }}:443"
       domains:
         glpi: "glpi.infra.local"
         wikijs: "wiki.infra.local"
+        grafana: "grafana.infra.local"
       default_backend: glpi
     
     wikijs-https-in:
-      bind: ":8443"
+      bind: "{{ proxy_interfaces.public.ip }}:8443"
       default_backend: wikijs
+
+    grafana-https-in:
+      bind: "{{ proxy_interfaces.public.ip }}:9443"
+      default_backend: grafana
+
+    stats_prometheus:
+      ssl: false
+      bind: "{{ proxy_interfaces.internal.ip }}:9101"
+      mode: "http"
+      options:
+        - "dontlog-normal"
+      http_request:
+        - "use-service prometheus-exporter if { path /metrics }"
 
   backends:
     glpi:
@@ -126,3 +162,18 @@ haproxy:
           check_interval: "10s"
           fall: 3
           rise: 2
+
+    grafana:
+      health_check_path: ""
+      health_check_status: 200
+      servers:
+        grafana-monitor:
+          address: "{{ backend_servers.grafana.address }}"
+          port: "{{ backend_servers.grafana.port }}"
+          check_interval: "10s"
+          fall: 3
+          rise: 2
+
+fluent_bit_extra_tail_paths:
+  - tag: haproxy.log
+    path: /var/log/haproxy.log

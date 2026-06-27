@@ -1,0 +1,177 @@
+---
+# Network interfaces configuration
+monitor_interfaces:
+  internal:
+    interface: ens160
+    ip: "192.168.216.11"
+    gateway: "192.168.216.1"
+    netmask: "24"
+    zone: internal
+
+  monitorproxy:
+    interface: ens224
+    ip: "192.168.217.2"
+    netmask: "24"
+    zone: monitorproxy
+
+# Firewall zones
+firewall_zones:
+  internal:
+    interface: "{{ monitor_interfaces.internal.interface }}"
+    services: ["ssh"]
+    ports:
+      - "3100/tcp" # Grafana Loki
+    forward: false
+    masquerade: false
+
+  monitorproxy:
+    interface: "{{ monitor_interfaces.monitorproxy.interface }}"
+    services: []
+    ports:
+      - "3000/tcp" # HTTP
+    forward: false
+    masquerade: false
+
+# Prometheus Scrape Jobs
+prometheus_scrape_jobs:
+  - job_name: node_exporter
+    static_configs:
+      - targets:
+          - localhost:9100
+        labels:
+          host: monitor
+          role: monitor
+
+      - targets:
+          - 192.168.216.1:9100
+        labels:
+          host: nat
+          role: gateway
+
+      - targets:
+          - 192.168.216.4:9100
+        labels:
+          host: proxy
+          role: reverse-proxy
+
+      - targets:
+          - 192.168.216.8:9100
+        labels:
+          host: pods
+          role: application
+
+      - targets:
+          - 192.168.216.9:9100
+        labels:
+          host: redis
+          role: cache
+
+      - targets:
+          - 192.168.216.10:9100
+        labels:
+          host: ipa
+          role: ipa
+
+  - job_name: haproxy_exporter
+    static_configs:
+      - targets:
+          - 192.168.216.4:9101
+        labels:
+          host: proxy
+          role: reverse-proxy
+
+  - job_name: redis_exporter
+    static_configs:
+      - targets:
+          - 192.168.216.9:9121
+        labels:
+          host: redis
+
+  - job_name: cadvisor
+    static_configs:
+      - targets:
+          - 192.168.216.8:8081
+        labels:
+          host: pods
+
+  - job_name: mysql_exporter
+    static_configs:
+      - targets:
+          - 192.168.216.8:9104
+        labels:
+          host: pods
+
+  - job_name: postgres_exporter
+    static_configs:
+      - targets:
+          - 192.168.216.8:9187
+        labels:
+          host: pods      
+
+node_exporter_listen_address: "localhost"
+fluent_bit_loki_host: "localhost"
+
+grafana_alert_rules:
+  # Node Exporter
+  - uid: node_exporter_down
+    title: "Node Exporter down on {{ '{{ $labels.host }}' }}"
+    condition: "B"
+    for: "3m"
+    severity: critical
+    expr: 'up{job="node_exporter"}'
+    evaluator: lt
+    threshold: 1
+
+  # CPU
+  - uid: high_cpu_usage
+    title: "CPU usage high on {{ '{{ $labels.host }}' }}"
+    condition: "B"
+    for: "10m"
+    severity: warning
+    expr: '100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)'
+    threshold: 90
+
+  # Memory
+  - uid: low_memory_available
+    title: "Memory available critically low on {{ '{{ $labels.host }}' }}"
+    condition: "B"
+    for: "5m"
+    severity: critical
+    expr: '(node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100'
+    evaluator: lt
+    threshold: 10
+
+  # Disk
+  - uid: high_disk_usage
+    title: "Disk usage high on {{ '{{ $labels.host }}' }}"
+    condition: "B"
+    for: "10m"
+    severity: warning
+    expr: '100 - ((node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} * 100) / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"})'
+    threshold: 85
+
+  - uid: disk_almost_full
+    title: "Disk almost full on {{ '{{ $labels.host }}' }}"
+    condition: "B"
+    for: "5m"
+    severity: critical
+    expr: '100 - ((node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} * 100) / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"})'
+    threshold: 95
+
+  # MariaDB
+  - uid: mysql_exporter_down
+    title: "MySQL Exporter down on {{ '{{ $labels.host }}' }}"
+    condition: "B"
+    for: "3m"
+    severity: critical
+    expr: 'up{job="mysql_exporter"}'
+    evaluator: lt
+    threshold: 1
+
+  - uid: mysql_high_connections
+    title: "MariaDB high connections on {{ '{{ $labels.host }}' }}"
+    condition: "B"
+    for: "5m"
+    severity: warning
+    expr: '(mysql_global_status_threads_connected / mysql_global_variables_max_connections) * 100'
+    threshold: 80

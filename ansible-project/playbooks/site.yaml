@@ -58,3 +58,38 @@
   roles:
     - freeipa_client
   tags: [freeipa, identity]
+
+- name: Prometheus configuration
+  hosts: monitoring_hosts
+  gather_facts: false
+  roles:
+    - prometheus
+  tags: [prometheus, monitoring]
+
+- name: Exporters configuration
+  hosts: monitoring_hosts
+  gather_facts: false
+  roles:
+    - exporters
+  tags: [exporters, monitoring]
+
+- name: Loki configuration
+  hosts: monitoring_hosts
+  gather_facts: false
+  roles:
+    - loki
+  tags: [loki, monitoring]
+
+- name: Fluent Bit configuration
+  hosts: monitoring_hosts
+  gather_facts: false
+  roles:
+    - fluentbit
+  tags: [fluentbit, monitoring]
+
+- name: Grafana configuration
+  hosts: monitoring_hosts
+  gather_facts: false
+  roles:
+    - grafana
+  tags: [grafana, monitoring]

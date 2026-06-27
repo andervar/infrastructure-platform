@@ -24,3 +24,8 @@ all:
       hosts:
         ipa:
           ansible_host: ipa-ansible
+
+    monitoring_hosts:
+      hosts:
+        monitor:
+          ansible_host: monitor-ansible

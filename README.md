@@ -6,19 +6,21 @@ This project documents the design, implementation, and automation of an infrastr
 
 The infrastructure was developed following principles of network segmentation, fault tolerance, security, and reproducibility, integrating technologies such as GLPI, MariaDB Galera, HAProxy, Keepalived, Redis, Wiki.js, and container security analysis tools.
 
-The repository is organized by evolutionary phases that show the progressive growth of the architecture:
+The repository is organized by evolutionary parts that show the progressive growth of the architecture:
 
 * **Intelligent storage** with ZFS, iSCSI, and NFS.
 * **Core IT services** with hardening and network segmentation.
 * **High availability and load balancing** eliminating single points of failure.
 * **Modernization with containers** using Podman and rootless pods.
 * **Declarative automation** using Ansible playbooks and roles.
+* **Identity management** with FreeIPA for centralized authentication and access control.
+* **Monitoring and observability** with Prometheus, Loki, and Grafana for metrics, logs, and alerting.
 
 ---
 
 ## Projects
 
-### [Phase I: Intelligent Storage System](docs/part1-storage/README.md)
+### [Part I: Intelligent Storage System](docs/part1-storage/README.md)
 
 Implementation of the data persistence layer for the virtual data center, using **TrueNAS Scale** as a unified storage platform.
 
@@ -29,7 +31,7 @@ Implementation of the data persistence layer for the virtual data center, using 
 
 ---
 
-### [Phase II: IT Infrastructure Services](docs/part2-core-services/README.md)
+### [Part II: IT Infrastructure Services](docs/part2-core-services/README.md)
 
 Deployment and hardening of an IT Service Management (ITSM) application on a segmented network architecture.
 
@@ -40,7 +42,7 @@ Deployment and hardening of an IT Service Management (ITSM) application on a seg
 
 ---
 
-### [Phase III: High Availability and Load Balancing (HA)](docs/part3-high-availability/README.md)
+### [Part III: High Availability and Load Balancing (HA)](docs/part3-high-availability/README.md)
 
 Evolution of the architecture towards a high availability and fault tolerance model, eliminating single points of failure in all service layers.
 
@@ -51,7 +53,7 @@ Evolution of the architecture towards a high availability and fault tolerance mo
 
 ---
 
-### [Phase IV: Modernization and Containers](docs/part4-containers/README.md)
+### [Part IV: Modernization and Containers](docs/part4-containers/README.md)
 
 Migration of native services to a container-based architecture, improving portability, isolation, and maintainability of the application ecosystem.
 
@@ -64,7 +66,7 @@ Migration of native services to a container-based architecture, improving portab
 
 ---
 
-### [Phase V: Ansible](docs/part5-ansible/README.md)
+### [Part V: Ansible](docs/part5-ansible/README.md)
 
 Complete automation of infrastructure deployment and configuration using **Ansible**, enabling reproducibility, scalability, and efficient lifecycle management of services.
 
@@ -72,6 +74,33 @@ Complete automation of infrastructure deployment and configuration using **Ansib
 * **Variables and Templates:** Extensive use of parameterized variables and Jinja2 templates to adapt configurations to different environments and facilitate customization without modifying the base code.
 * **Idempotency and Validation:** Implementation of idempotent tasks that guarantee consistency of the desired state, along with post-deployment validations to verify correct configuration and operation of services (status verification, connectivity tests, configuration validation).
 
+---
+
+### [Phase VI: Identity Management System](docs/part6-freeipa/README.md)
+
+Implementation of a centralized identity management system for the entire infrastructure using **FreeIPA**, providing unified authentication, DNS, and access control across all hosts and web services.
+
+* **Identity Management:** Deployment of **FreeIPA** on a dedicated VM with **Rocky Linux 9**, providing centralized user and group management, Kerberos-based authentication, and a Certificate Authority for the `infra.local` domain.
+* **Local DNS:** Configuration of FreeIPA as the internal DNS server, enabling all VMs to be reached by hostname instead of hard-coded IP addresses across the infrastructure.
+* **Access Control:** Design and enforcement of **Host-Based Access Control (HBAC)** policies restricting which users can SSH to which hosts and which services they may use, following a "deny by default" model by disabling the built-in `allow_all` rule.
+* **Sudo Rules:** Definition of granular **Sudo Rules** in FreeIPA mapping user groups to specific command groups (`cmd-group-services`, `cmd-group-readonly`), replacing local sudoers files across all nodes.
+* **User and Group Design:** Creation of four role-based user groups (`infra-admins`, `infra-core-ops`, `infra-app-ops`, `infra-readonly`) with corresponding host groups (`all-managed`, `entry-servers`, `app-servers`, `infra-servers`, `idm-servers`) to model least-privilege access.
+* **LDAP Integration:** Integration of **GLPI** and **Wiki.js** with FreeIPA via LDAP, using dedicated read-only service accounts (`glpi-ldap`, `wikijs-ldap`) so users authenticate to web services with their centralized credentials.
+* **Automation:** FreeIPA server installation and client enrollment on all nodes automated through **Ansible** using the `freeipa.ansible_freeipa` collection, with sensitive credentials managed via Ansible Vault.
+
+---
+
+### [Phase VII: Monitoring System](docs/part7-monitoring/README.md)
+
+Implementation of a monitoring system for the infrastructure enabling resource usage tracking and alert generation for events that may compromise service continuity.
+
+* **Stack:** Deployment of **Prometheus + Loki + Grafana** as the unified observability platform, covering metrics, logs, and alerting from a single interface.
+* **Metrics Collection:** Installation of **Node Exporter** on all nodes for OS-level metrics, along with service-specific exporters: **Redis Exporter**, **PostgreSQL Exporter**, **MySQLd Exporter**, **cAdvisor** (Podman containers), and native **HAProxy** metrics endpoint.
+* **Log Aggregation:** Deployment of **Fluent Bit** on every node as a lightweight log forwarding agent, collecting from systemd journal, `/var/log/`, and Podman container logs, and shipping them to **Loki** for centralized storage and querying.
+* **Dashboards:** Import and configuration of community dashboards (Node Exporter Full, HAProxy, Redis, cAdvisor, PostgreSQL, MySQL) to visualize the state of all infrastructure layers.
+* **Alerting:** Definition of custom alert rules in **Grafana Alerting** with notification delivery via institutional email (SMTP) and **Telegram** bot, replacing the need for a separate Alertmanager.
+* **Identity Integration:** Grafana integrated with **FreeIPA via LDAP** for centralized user authentication and role-based access control aligned with the existing HBAC policy.
+* **Automation:** All components (Prometheus, Loki, Fluent Bit, Grafana, exporters) deployed and configured through dedicated **Ansible roles**, ensuring idempotent and reproducible provisioning.
 ---
 
 ## Contact Information

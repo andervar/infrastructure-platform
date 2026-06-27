@@ -8,8 +8,9 @@ postgres_env_file: "containers/configs/postgres/postgres.env"
 wikijs_env_file:   "containers/configs/wikijs/wikijs.env"
 
 # Pod
-wikijs_pod_publish_port: "3000:3000"
-
+wikijs_pod_publish_ports:
+  - "3000:3000"
+  - "127.0.0.1:5432:5432"
 # Volumes
 wikijs_volumes:
   - "containers/volumes/wikijs-data:/wiki/data/content:Z"

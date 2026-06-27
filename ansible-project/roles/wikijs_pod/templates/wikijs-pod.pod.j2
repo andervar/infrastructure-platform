@@ -5,7 +5,9 @@ After=network-online.target
 
 [Pod]
 PodName={{ wikijs_pod_name }}
-PublishPort={{ wikijs_pod_publish_port }}
+{% for port in wikijs_pod_publish_ports %}
+PublishPort={{ port }}
+{% endfor %}
 
 [Install]
 WantedBy=default.target

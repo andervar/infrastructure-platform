@@ -1,0 +1,101 @@
+---
+- name: "[node_exporter] Create system group"
+  ansible.builtin.group:
+    name: "{{ exporters_node_exporter_group }}"
+    system: true
+    state: present
+
+- name: "[node_exporter] Create system user"
+  ansible.builtin.user:
+    name: "{{ exporters_node_exporter_user }}"
+    group: "{{ exporters_node_exporter_group }}"
+    shell: /sbin/nologin
+    home: /var/lib/node_exporter
+    create_home: false
+    system: true
+    state: present
+
+- name: "[node_exporter] Check if binary is already installed"
+  ansible.builtin.stat:
+    path: "{{ exporters_node_exporter_binary }}"
+  register: node_exporter_binary
+  when: not ansible_check_mode
+
+- name: "[node_exporter] Download tarball"
+  ansible.builtin.get_url:
+    url: "{{ exporters_node_exporter_download_url }}"
+    dest: "{{ exporters_node_exporter_tmp_path }}"
+    checksum: "{{ exporters_node_exporter_checksum }}"
+    mode: "0644"
+    timeout: 60
+    force: false
+  register: download_result
+  when:
+    - not ansible_check_mode
+    - not node_exporter_binary.stat.exists
+
+- name: "[node_exporter] Extract binary from tarball"
+  ansible.builtin.unarchive:
+    src: "{{ exporters_node_exporter_tmp_path }}"
+    dest: /tmp/
+    remote_src: true
+    creates: "/tmp/node_exporter-{{ exporters_node_exporter_version }}.linux-amd64/node_exporter"
+  register: extract_result
+  when:
+    - not ansible_check_mode
+    - not node_exporter_binary.stat.exists
+
+- name: "[node_exporter] Install binary to /usr/local/bin"
+  ansible.builtin.copy:
+    src: "/tmp/node_exporter-{{ exporters_node_exporter_version }}.linux-amd64/node_exporter"
+    dest: "{{ exporters_node_exporter_binary }}"
+    owner: root
+    group: root
+    mode: "0755"
+    remote_src: true
+  notify: Restart node_exporter
+  when:
+    - not ansible_check_mode
+    - extract_result is changed
+
+- name: "[node_exporter] Remove tarball from /tmp"
+  ansible.builtin.file:
+    path: "{{ exporters_node_exporter_tmp_path }}"
+    state: absent
+  when:
+    - not ansible_check_mode
+    - download_result is changed or extract_result is changed
+
+- name: "[node_exporter] Remove extracted directory from /tmp"
+  ansible.builtin.file:
+    path: "/tmp/node_exporter-{{ exporters_node_exporter_version }}.linux-amd64"
+    state: absent
+  when:
+    - not ansible_check_mode
+    - extract_result is changed
+
+- name: "[node_exporter] Deploy systemd unit file"
+  ansible.builtin.template:
+    src: node_exporter.service.j2
+    dest: /etc/systemd/system/node_exporter.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart node_exporter
+  when: not ansible_check_mode
+
+- name: "[node_exporter] Enable and start service"
+  ansible.builtin.systemd:
+    name: node_exporter
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: not ansible_check_mode
+
+- name: "[node_exporter] Verify /metrics endpoint responds"
+  ansible.builtin.uri:
+    url: "http://{{ exporters_node_exporter_listen_address }}:{{ exporters_node_exporter_port }}/metrics"
+    status_code: 200
+    timeout: 10
+  check_mode: false
+  when: not ansible_check_mode

@@ -1,0 +1,135 @@
+---
+# Source allowed for scraping
+exporters_monitor_source: "192.168.216.11"
+exporters_firewall_zone: "internal"
+node_exporter_listen_address: >-
+  {{ lookup('vars', inventory_hostname + '_interfaces')[exporters_firewall_zone]['ip'] }}
+
+node_exporter:
+  service: node_exporter
+  version: "1.11.0"
+  checksum: "sha256:4f8fbd23b8380b8fb720b125fb9029de261dc5fcd68bfe81ae010c0d32f5f6c3"
+
+
+  user: node_exporter
+  group: node_exporter
+
+  port: 9100
+  listen_address: "{{ node_exporter_listen_address }}"
+
+  documentation: https://github.com/prometheus/node_exporter
+  download_url: >-
+    https://github.com/prometheus/node_exporter/releases/download/v1.11.0/node_exporter-1.11.0.linux-amd64.tar.gz
+
+  binary: /usr/local/bin/node_exporter
+  binary_name: node_exporter
+  tmp_path: /tmp/node_exporter-1.11.0.linux-amd64.tar.gz
+  extract_dir: node_exporter-1.11.0.linux-amd64
+
+  environment: {}
+  extra_args:
+    - "--collector.systemd"
+    - "--collector.processes"
+
+redis_exporter:
+  service: redis_exporter
+  version: "1.85.0"
+  checksum: "sha256:2271d4d1433341f8c4c77df21fd626781d71e3b221e6e362203c96eed74c928c"
+
+
+  user: redis_exporter
+  group: redis_exporter
+
+  port: 9121
+  listen_address: "{{ redis_interfaces.internal.ip }}"
+
+  documentation: https://github.com/oliver006/redis_exporter
+  download_url: >-
+    https://github.com/oliver006/redis_exporter/releases/download/v1.85.0/redis_exporter-v1.85.0.linux-amd64.tar.gz
+
+  binary: /usr/local/bin/redis_exporter
+  binary_name: redis_exporter
+  tmp_path: /tmp/redis_exporter-v1.85.0.linux-amd64.tar.gz
+  extract_dir: redis_exporter-v1.85.0.linux-amd64
+
+  redis_addr: "redis://{{ redis_interfaces.appredis.ip }}:{{ redis.port }}"
+  redis_password: "{{ vault_redis_password }}"
+
+  environment:
+    REDIS_ADDR: "redis://{{ redis_interfaces.appredis.ip }}:{{ redis.port }}"
+    REDIS_PASSWORD: "{{ vault_redis_password }}"
+  extra_args: []
+
+postgres_exporter:
+  service: postgres_exporter
+  version: "0.19.0"
+  checksum: "sha256:11033f9016d0c5a5b91742d17aa37490b170f055ec1bb0d7d69509d223952ed0"
+  user: postgres_exporter
+  group: postgres_exporter
+
+  port: 9187
+  listen_address: "{{ node_exporter_listen_address }}"
+
+  documentation: https://github.com/prometheus-community/postgres_exporter
+  download_url: >-
+    https://github.com/prometheus-community/postgres_exporter/releases/download/v0.19.0/postgres_exporter-0.19.0.linux-amd64.tar.gz
+
+  binary: /usr/local/bin/postgres_exporter
+  binary_name: postgres_exporter
+  tmp_path: /tmp/postgres_exporter-0.19.0.linux-amd64.tar.gz
+  extract_dir: postgres_exporter-0.19.0.linux-amd64
+
+  environment:
+    DATA_SOURCE_URI: "localhost:5432/{{ wikijs_db_name }}?sslmode=disable"
+    DATA_SOURCE_USER: "{{ wikijs_db_user }}"
+    DATA_SOURCE_PASS: "{{ vault_postgres_wikijs_password }}"
+  extra_args: []
+
+mysql_exporter:
+  service: mysql_exporter
+  version: "0.18.0"
+  checksum: "sha256:46e8f45654352bdd42d162b2b4a68f00055d45acc168f9c068235b9e3acc39c1"
+
+  user: mysql_exporter
+  group: mysql_exporter
+
+  port: 9104
+  listen_address: "{{ node_exporter_listen_address }}"
+
+  documentation: https://github.com/prometheus/mysqld_exporter
+  download_url: >-
+    https://github.com/prometheus/mysqld_exporter/releases/download/v0.18.0/mysqld_exporter-0.18.0.linux-amd64.tar.gz
+
+  binary: /usr/local/bin/mysqld_exporter
+  binary_name: mysqld_exporter
+  tmp_path: /tmp/mysqld_exporter-0.18.0.linux-amd64.tar.gz
+  extract_dir: mysqld_exporter-0.18.0.linux-amd64
+
+  my_cnf_path: "/etc/mysql_exporter/.my.cnf"
+  db_user: "{{ glpi_db_user }}"
+  db_password: "{{ vault_mariadb_glpi_password }}"
+  db_host: "localhost"
+  db_port: 3306
+
+  environment: {}
+  extra_args: []
+
+cadvisor:
+  service: cadvisor
+  version: "0.56.0"
+  checksum: "sha256:4640257f6c528ae04505cf63ea4ba35746bc240ec526fe4576f12bc5d5281c3e"
+  user: root
+  group: root
+
+  port: 8081
+  listen_address: "{{ node_exporter_listen_address }}"
+
+  documentation: https://github.com/google/cadvisor
+  download_url: >-
+    https://github.com/google/cadvisor/releases/download/v0.56.0/cadvisor-v0.56.0-linux-amd64
+
+  binary: /usr/local/bin/cadvisor
+  tmp_path: /tmp/cadvisor-v0.56.0-linux-amd64
+
+  disable_metrics: "advtcp,cpu_topology,cpuset,hugetlb,memory_numa,process,referenced_memory,resctrl,sched,tcp,udp"
+  podman_user_home: "/home/{{ podman_user }}"

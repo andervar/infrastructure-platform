@@ -1,0 +1,28 @@
+[Unit]
+Description=cAdvisor - Container Advisor
+Documentation={{ cadvisor.documentation }}
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+
+Environment="HOME={{ cadvisor.podman_user_home }}"
+Environment="XDG_RUNTIME_DIR=/run/user/{{ podman_uid }}"
+
+ExecStart={{ cadvisor.binary }} \
+  --port={{ cadvisor.port }} \
+  --listen_ip={{ cadvisor.listen_address }} \
+  --podman="unix:///run/user/{{ podman_uid }}/podman/podman.sock" \
+  --docker="unix://" \
+  --store_container_labels=false \
+  --docker_only=false \
+  --disable_metrics={{ cadvisor.disable_metrics }}
+
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

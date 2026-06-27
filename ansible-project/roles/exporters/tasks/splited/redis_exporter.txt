@@ -1,0 +1,104 @@
+---
+- name: "[redis_exporter] Create system group"
+  ansible.builtin.group:
+    name: "{{ exporters_redis_exporter_group }}"
+    system: true
+    state: present
+
+- name: "[redis_exporter] Create system user"
+  ansible.builtin.user:
+    name: "{{ exporters_redis_exporter_user }}"
+    group: "{{ exporters_redis_exporter_group }}"
+    shell: /sbin/nologin
+    home: /var/lib/redis_exporter
+    create_home: false
+    system: true
+    state: present
+
+- name: "[redis_exporter] Check if binary is already installed"
+  ansible.builtin.stat:
+    path: "{{ exporters_redis_exporter_binary }}"
+  register: redis_exporter_binary
+  when: not ansible_check_mode
+
+- name: "[redis_exporter] Download tarball"
+  ansible.builtin.get_url:
+    url: "{{ exporters_redis_exporter_download_url }}"
+    dest: "{{ exporters_redis_exporter_tmp_path }}"
+    checksum: "{{ exporters_redis_exporter_checksum }}"
+    mode: "0644"
+    timeout: 60
+    force: false
+  register: download_result
+  when:
+    - not ansible_check_mode
+    - not redis_exporter_binary.stat.exists
+
+- name: "[redis_exporter] Extract binary from tarball"
+  ansible.builtin.unarchive:
+    src: "{{ exporters_redis_exporter_tmp_path }}"
+    dest: /tmp/
+    remote_src: true
+    creates: "/tmp/redis_exporter-v{{ exporters_redis_exporter_version }}.linux-amd64/redis_exporter"
+  register: extract_result
+  when: 
+    - not ansible_check_mode
+    - not redis_exporter_binary.stat.exists
+
+- name: "[redis_exporter] Install binary to /usr/local/bin"
+  ansible.builtin.copy:
+    src: "/tmp/redis_exporter-v{{ exporters_redis_exporter_version }}.linux-amd64/redis_exporter"
+    dest: "{{ exporters_redis_exporter_binary }}"
+    owner: root
+    group: root
+    mode: "0755"
+    remote_src: true
+  notify: Restart redis_exporter
+  when:
+    - not ansible_check_mode
+    - extract_result is changed
+    
+
+- name: "[redis_exporter] Remove tarball from /tmp"
+  ansible.builtin.file:
+    path: "{{ exporters_redis_exporter_tmp_path }}"
+    state: absent
+  when: 
+    - not ansible_check_mode
+    - download_result is changed or extract_result is changed
+    
+
+- name: "[redis_exporter] Remove extracted directory from /tmp"
+  ansible.builtin.file:
+    path: "/tmp/redis_exporter-v{{ exporters_redis_exporter_version }}.linux-amd64"
+    state: absent
+  when: 
+    - not ansible_check_mode
+    - extract_result is changed
+
+
+- name: "[redis_exporter] Deploy systemd unit file"
+  ansible.builtin.template:
+    src: redis_exporter.service.j2
+    dest: /etc/systemd/system/redis_exporter.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart redis_exporter
+  when: not ansible_check_mode
+
+- name: "[redis_exporter] Enable and start service"
+  ansible.builtin.systemd:
+    name: redis_exporter
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: not ansible_check_mode
+
+- name: "[redis_exporter] Verify /metrics endpoint responds"
+  ansible.builtin.uri:
+    url: "http://{{ ansible_default_ipv4.address }}:{{ exporters_redis_exporter_port }}/metrics"
+    status_code: 200
+    timeout: 10
+  check_mode: false
+  when: not ansible_check_mode

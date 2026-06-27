@@ -1,0 +1,19 @@
+---
+- name: Deploy prometheus systemd unit
+  ansible.builtin.template:
+    src: prometheus.service.j2
+    dest: /etc/systemd/system/prometheus.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart prometheus
+  when: not ansible_check_mode
+
+- name: Enable and start prometheus
+  ansible.builtin.systemd:
+    name: prometheus
+    enabled: true
+    state: started
+  when: not ansible_check_mode

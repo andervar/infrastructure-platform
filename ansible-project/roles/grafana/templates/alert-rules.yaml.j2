@@ -2,7 +2,7 @@ apiVersion: 1
 groups:
   - orgId: 1
     name: infra-alerts
-    folder: Infraestructura
+    folder: Infrastructure
     interval: 1m
     rules:
 {% for rule in grafana_alert_rules %}
@@ -38,7 +38,7 @@ groups:
               expression: A
               conditions:
                 - evaluator:
-                    type: gt
+                    type: {{ rule.evaluator | default('gt') }}
                     params:
                       - {{ rule.threshold }}
               refId: {{ rule.condition }}

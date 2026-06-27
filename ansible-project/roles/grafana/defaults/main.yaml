@@ -20,10 +20,10 @@ grafana_admin_password: "{{ vault_grafana_admin_password }}"
 
 # SMTP
 grafana_smtp_enabled: true
-grafana_smtp_host: "smtp.gmail.com:587"
+grafana_smtp_host: "smtp.ucr.ac.cr:587"
 grafana_smtp_user: "{{ vault_smtp_user }}"
 grafana_smtp_password: "{{ vault_smtp_password }}"
-grafana_smtp_from_address: "{{ vault_smtp_user }}"
+grafana_smtp_from_address: "{{ vault_smtp_user }}@ucr.ac.cr"
 grafana_smtp_from_name: "Grafana - Infraestructure Platform"
 
 # Telegram
@@ -33,3 +33,18 @@ grafana_telegram_chat_id: "{{ vault_telegram_chat_id }}"
 
 # Alert rules
 grafana_alert_rules: []
+
+# LDAP
+grafana_ldap_enabled: true
+
+grafana_ldap_server: "192.168.216.10"
+grafana_ldap_port: 389
+
+grafana_ldap_bind_dn: "uid=grafana-ldap,cn=users,cn=accounts,dc=infra,dc=local"
+grafana_ldap_bind_password: "{{ vault_ipa_grafana_password }}"
+
+grafana_ldap_search_base_dns:
+  - "cn=users,cn=accounts,dc=infra,dc=local"
+
+grafana_ldap_group_base_dns:
+  - "cn=groups,cn=accounts,dc=infra,dc=local"

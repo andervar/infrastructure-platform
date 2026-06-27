@@ -4,9 +4,7 @@
     file: deploy_exporter.yaml
   vars:
     exporter: "{{ node_exporter }}"
-  tags:
-    - exporters
-    - node_exporter
+  tags: [exporters, node_exporter]
 
 - name: Deploy Redis Exporter
   ansible.builtin.include_tasks:
@@ -14,9 +12,7 @@
   vars:
     exporter: "{{ redis_exporter }}"
   when: inventory_hostname == "redis"
-  tags:
-    - exporters
-    - redis_exporter
+  tags: [exporters, redis_exporter]
 
 - name: Deploy Postgres Exporter
   ansible.builtin.include_tasks:
@@ -24,9 +20,7 @@
   vars:
     exporter: "{{ postgres_exporter }}"
   when: inventory_hostname == "pods"
-  tags:
-    - exporters
-    - postgres_exporter
+  tags: [exporters, postgres_exporter]
 
 - name: Deploy MySQL Exporter
   ansible.builtin.include_tasks:
@@ -34,9 +28,7 @@
   vars:
     exporter: "{{ mysql_exporter }}"
   when: inventory_hostname == "pods"
-  tags:
-    - exporters
-    - mysql_exporter
+  tags: [exporters, mysql_exporter]
 
 - name: Deploy cAdvisor
   ansible.builtin.include_tasks:

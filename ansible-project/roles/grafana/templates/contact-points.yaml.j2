@@ -16,8 +16,8 @@ contactPoints:
       - uid: telegram-receiver
         type: telegram
         settings:
-          bottoken: "{{ grafana_telegram_bot_token }}"
-          chatid: "{{ grafana_telegram_chat_id }}"
+          botToken: "{{ grafana_telegram_bot_token }}"
+          chatId: "{{ grafana_telegram_chat_id }}"
           message: |-
             {{ '{{' }} template "default.message" . {{ '}}' }}
         disableResolveMessage: false

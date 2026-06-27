@@ -1,0 +1,57 @@
+[[servers]]
+
+host = "{{ grafana_ldap_server }}"
+port = {{ grafana_ldap_port }}
+
+use_ssl = false
+start_tls = false
+
+bind_dn = "{{ grafana_ldap_bind_dn }}"
+bind_password = "{{ grafana_ldap_bind_password }}"
+
+search_filter = "(uid=%s)"
+
+search_base_dns = [
+{% for dn in grafana_ldap_search_base_dns %}
+"{{ dn }}",
+{% endfor %}
+]
+
+group_search_filter = "(member=%s)"
+
+group_search_base_dns = [
+{% for dn in grafana_ldap_group_base_dns %}
+"{{ dn }}",
+{% endfor %}
+]
+
+[servers.attributes]
+name = "givenName"
+surname = "sn"
+username = "uid"
+email = "mail"
+member_of = "memberOf"
+
+# Admins
+
+[[servers.group_mappings]]
+group_dn = "cn=infra-admins,cn=groups,cn=accounts,dc=infra,dc=local"
+org_role = "Admin"
+
+# Core Operations
+
+[[servers.group_mappings]]
+group_dn = "cn=infra-core-ops,cn=groups,cn=accounts,dc=infra,dc=local"
+org_role = "Editor"
+
+# Application Operations
+
+[[servers.group_mappings]]
+group_dn = "cn=infra-app-ops,cn=groups,cn=accounts,dc=infra,dc=local"
+org_role = "Editor"
+
+# Read Only
+
+[[servers.group_mappings]]
+group_dn = "cn=infra-readonly,cn=groups,cn=accounts,dc=infra,dc=local"
+org_role = "Viewer"

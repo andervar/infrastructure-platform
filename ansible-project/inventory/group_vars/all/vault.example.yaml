@@ -9,6 +9,7 @@ vault_redis_password: "<PASSWORD_REDIS>"
 # FreeIPA passwords
 vault_ipa_admin_password: "<PASSWORD_IPADM>"
 vault_ipa_ds_password: "<PASSWORD_IPADS>"
+vault_ipa_grafana_password: "<PASSWORD_IPA_GRAFANA>"
 
 # Grafana
 vault_grafana_admin_password: "<PASSWORD_GRAFANA_ADMIN>"

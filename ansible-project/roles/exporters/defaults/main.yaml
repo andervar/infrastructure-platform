@@ -52,11 +52,11 @@ redis_exporter:
   tmp_path: /tmp/redis_exporter-v1.85.0.linux-amd64.tar.gz
   extract_dir: redis_exporter-v1.85.0.linux-amd64
 
-  redis_addr: "redis://{{ redis_interfaces.internal.ip }}:{{ redis.port }}"
+  redis_addr: "redis://{{ redis_interfaces.appredis.ip }}:{{ redis.port }}"
   redis_password: "{{ vault_redis_password }}"
 
   environment:
-    REDIS_ADDR: "redis://{{ redis_interfaces.internal.ip }}:{{ redis.port }}"
+    REDIS_ADDR: "redis://{{ redis_interfaces.appredis.ip }}:{{ redis.port }}"
     REDIS_PASSWORD: "{{ vault_redis_password }}"
   extra_args: []
 

@@ -15,6 +15,10 @@
   ansible.builtin.include_tasks: alerts.yaml
   tags: [grafana, alerts]
 
+- name: Configure Grafana LDAP
+  ansible.builtin.include_tasks: ldap.yaml
+  tags: [grafana, ldap]
+
 - name: Manage Grafana service
   ansible.builtin.include_tasks: service.yaml
   tags: [grafana, service]

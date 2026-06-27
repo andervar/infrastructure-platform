@@ -1,0 +1,12 @@
+---
+- name: Deploy Grafana LDAP configuration
+  ansible.builtin.template:
+    src: ldap.toml.j2
+    dest: /etc/grafana/ldap.toml
+    owner: root
+    group: grafana
+    mode: "0640"
+  notify: Restart grafana-server
+  when:
+    - grafana_ldap_enabled
+    - not ansible_check_mode

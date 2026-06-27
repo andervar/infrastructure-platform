@@ -1,0 +1,50 @@
+---
+monitor_addr: "192.168.216.11"
+
+grafana_repo_baseurl: "https://rpm.grafana.com"
+grafana_repo_gpgkey: "https://rpm.grafana.com/gpg.key"
+
+grafana_http_addr: "0.0.0.0"
+grafana_http_port: 3000
+
+grafana_config_path: "/etc/grafana/grafana.ini"
+grafana_provisioning_dir: "/etc/grafana/provisioning"
+
+# Datasource URLs deployed in exporters role
+grafana_prometheus_url: "http://{{ monitor_addr }}:9090"
+grafana_loki_url: "http://{{ monitor_addr }}:3100"
+
+# User Admin
+grafana_admin_user: "admin"
+grafana_admin_password: "{{ vault_grafana_admin_password }}"
+
+# SMTP
+grafana_smtp_enabled: true
+grafana_smtp_host: "smtp.ucr.ac.cr:587"
+grafana_smtp_user: "{{ vault_smtp_user }}"
+grafana_smtp_password: "{{ vault_smtp_password }}"
+grafana_smtp_from_address: "{{ vault_smtp_user }}@ucr.ac.cr"
+grafana_smtp_from_name: "Grafana - Infraestructure Platform"
+
+# Telegram
+grafana_telegram_enabled: true
+grafana_telegram_bot_token: "{{ vault_telegram_bot_token }}"
+grafana_telegram_chat_id: "{{ vault_telegram_chat_id }}"
+
+# Alert rules
+grafana_alert_rules: []
+
+# LDAP
+grafana_ldap_enabled: true
+
+grafana_ldap_server: "192.168.216.10"
+grafana_ldap_port: 389
+
+grafana_ldap_bind_dn: "uid=grafana-ldap,cn=users,cn=accounts,dc=infra,dc=local"
+grafana_ldap_bind_password: "{{ vault_ipa_grafana_password }}"
+
+grafana_ldap_search_base_dns:
+  - "cn=users,cn=accounts,dc=infra,dc=local"
+
+grafana_ldap_group_base_dns:
+  - "cn=groups,cn=accounts,dc=infra,dc=local"

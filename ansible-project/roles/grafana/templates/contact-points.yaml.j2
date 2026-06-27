@@ -1,0 +1,24 @@
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: default-contact-point
+    receivers:
+{% if grafana_smtp_enabled %}
+      - uid: email-receiver
+        type: email
+        settings:
+          addresses: "{{ grafana_smtp_from_address }}"
+          singleEmail: false
+        disableResolveMessage: false
+{% endif %}
+{% if grafana_telegram_enabled %}
+      - uid: telegram-receiver
+        type: telegram
+        settings:
+          botToken: "{{ grafana_telegram_bot_token }}"
+          chatId: "{{ grafana_telegram_chat_id }}"
+          message: |-
+            {{ '{{' }} template "default.message" . {{ '}}' }}
+        disableResolveMessage: false
+{% endif %}

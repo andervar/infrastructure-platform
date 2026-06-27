@@ -4,7 +4,9 @@ After=network-online.target
 
 [Pod]
 PodName={{ glpi_pod_name }}
-PublishPort={{ glpi_pod_publish_port }}
+{% for port in glpi_pod_publish_ports %}
+PublishPort={{ port }}
+{% endfor %}
 
 [Install]
 WantedBy=default.target

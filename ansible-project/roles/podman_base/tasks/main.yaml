@@ -7,7 +7,6 @@
   ansible.builtin.include_tasks: user_setup.yaml
   tags: [podman_base, user_setup]
 
-
 - name: Configure Podman subordinate IDs
   ansible.builtin.include_tasks: subids.yaml
   tags: [podman_base, subids]

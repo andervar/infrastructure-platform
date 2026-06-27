@@ -1,0 +1,20 @@
+---
+- name: Prepare Loki system account and directories
+  ansible.builtin.include_tasks: system.yaml
+  tags: [loki, system]
+
+- name: Install Loki binaries
+  ansible.builtin.include_tasks: install.yaml
+  tags: [loki, install]
+
+- name: Configure Loki
+  ansible.builtin.include_tasks: config.yaml
+  tags: [loki, config]
+
+- name: Manage Loki service
+  ansible.builtin.include_tasks: service.yaml
+  tags: [loki, service]
+
+- name: Verify Loki
+  ansible.builtin.include_tasks: verify.yaml
+  tags: [loki, verify]

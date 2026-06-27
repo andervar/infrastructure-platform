@@ -1,0 +1,60 @@
+---
+- name: Ensure unzip is installed
+  ansible.builtin.dnf:
+    name: unzip
+    state: present
+
+- name: Check if binary exists
+  ansible.builtin.stat:
+    path: "{{ loki_binary }}"
+  register: loki_binary_check
+
+- name: Download archive
+  ansible.builtin.get_url:
+    url: "{{ loki_download_url }}"
+    dest: "{{ loki_tmp_path }}"
+    checksum: "{{ loki_checksum }}"
+    mode: "0644"
+    timeout: 120
+    force: false
+  register: loki_download
+  when: not loki_binary_check.stat.exists
+
+- name: Extract binary
+  ansible.builtin.unarchive:
+    src: "{{ loki_tmp_path }}"
+    dest: /tmp/
+    remote_src: true
+    creates: "/tmp/loki-linux-amd64"
+  when:
+    - not ansible_check_mode
+    - not loki_binary_check.stat.exists
+
+- name: Install binary to /usr/local/bin
+  ansible.builtin.copy:
+    src: "/tmp/loki-linux-amd64"
+    dest: "{{ loki_binary }}"
+    owner: root
+    group: root
+    mode: "0755"
+    remote_src: true
+  notify: Restart loki
+  when:
+    - not ansible_check_mode
+    - not loki_binary_check.stat.exists
+
+- name: Remove downloaded archive
+  ansible.builtin.file:
+    path: "{{ loki_tmp_path }}"
+    state: absent
+  when:
+    - not ansible_check_mode
+    - loki_download is changed
+
+- name: Remove extracted binary from /tmp
+  ansible.builtin.file:
+    path: "/tmp/loki-linux-amd64"
+    state: absent
+  when:
+    - not ansible_check_mode
+    - not loki_binary_check.stat.exists

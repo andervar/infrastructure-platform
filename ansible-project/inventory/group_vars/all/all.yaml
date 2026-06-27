@@ -35,3 +35,8 @@ hosts_entries:
   - ip: "{{ ipa_ip }}"
     name: "{{ ipa_fqdn }}"
     aliases: ["{{ ipa_hostname }}"]
+  - ip: "192.168.216.11"
+    name: "{{ monitor_fqdn }}"
+    aliases: ["monitor"]
+
+

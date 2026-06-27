@@ -5,6 +5,7 @@
     - proxy_hosts
     - container_hosts
     - cache_hosts
+    - monitoring_hosts
   gather_facts: true
   roles:
     - freeipa_client

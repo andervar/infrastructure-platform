@@ -1,6 +1,6 @@
 ---
-- name: Test Common Role
+- name: Test Fluent Bit Role
   hosts: all
   gather_facts: true
   roles:
-    - common
+    - fluentbit

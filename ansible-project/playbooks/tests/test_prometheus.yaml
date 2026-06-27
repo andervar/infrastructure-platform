@@ -1,0 +1,6 @@
+---
+- name: Test Prometheus Role
+  hosts: monitoring_hosts
+  gather_facts: true
+  roles:
+    - prometheus

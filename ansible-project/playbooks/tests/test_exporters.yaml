@@ -1,6 +1,6 @@
 ---
-- name: Test Common Role
+- name: Test Exporters Role
   hosts: all
   gather_facts: true
   roles:
-    - common
+    - exporters

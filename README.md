@@ -101,6 +101,7 @@ Implementation of a monitoring system for the infrastructure enabling resource u
 * **Alerting:** Definition of custom alert rules in **Grafana Alerting** with notification delivery via institutional email (SMTP) and **Telegram** bot, replacing the need for a separate Alertmanager.
 * **Identity Integration:** Grafana integrated with **FreeIPA via LDAP** for centralized user authentication and role-based access control aligned with the existing HBAC policy.
 * **Automation:** All components (Prometheus, Loki, Fluent Bit, Grafana, exporters) deployed and configured through dedicated **Ansible roles**, ensuring idempotent and reproducible provisioning.
+
 ---
 
 ## Contact Information

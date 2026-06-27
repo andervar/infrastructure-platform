@@ -1,0 +1,24 @@
+- name: Ensure Fluent Bit data directory exists
+  ansible.builtin.file:
+    path: "{{ fluent_bit_data_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy Fluent Bit configuration
+  ansible.builtin.template:
+    src: fluent-bit.conf.j2
+    dest: "{{ fluent_bit_config_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart fluent-bit
+  when: not ansible_check_mode
+
+- name: Validate Fluent Bit configuration
+  ansible.builtin.command:
+    cmd: "{{ fluent_bit_binary }} --dry-run -c {{ fluent_bit_config_path }}"
+  register: fluent_bit_dry_run
+  changed_when: false
+  when: not ansible_check_mode

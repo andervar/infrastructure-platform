@@ -1,0 +1,15 @@
+---
+- name: Check Fluent Bit status
+  ansible.builtin.command: systemctl is-active fluent-bit
+  register: fluentbit_status
+  changed_when: false
+
+- name: Assert Fluent Bit is running
+  ansible.builtin.assert:
+    that:
+      - fluentbit_status.stdout == "active"
+    fail_msg: >-
+      Fluent Bit is not active on {{ inventory_hostname }}.
+      Status: {{ fluentbit_status.stdout }}.
+    success_msg: "Fluent Bit is active on {{ inventory_hostname }}"
+  when: not ansible_check_mode

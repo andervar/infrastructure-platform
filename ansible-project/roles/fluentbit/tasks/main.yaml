@@ -1,0 +1,16 @@
+---
+- name: Install Fluent Bit binaries
+  ansible.builtin.include_tasks: install.yaml
+  tags: [fluentbit, install]
+
+- name: Configure Fluent Bit
+  ansible.builtin.include_tasks: config.yaml
+  tags: [fluentbit, configuration]
+
+- name: Manage Fluent Bit service
+  ansible.builtin.include_tasks: service.yaml
+  tags: [fluentbit, service]
+
+- name: Verify Fluent Bit
+  ansible.builtin.include_tasks: verify.yaml
+  tags: [fluentbit, verify]

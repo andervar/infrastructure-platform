@@ -1,0 +1,61 @@
+[SERVICE]
+    Flush         5
+    Log_Level     info
+    Daemon        off
+    Parsers_File  parsers.conf
+    HTTP_Server   Off
+
+{% for unit in fluent_bit_systemd_units %}
+[INPUT]
+    Name           systemd
+    Tag            systemd.{{ unit | regex_replace('\\.service$', '') }}
+    Systemd_Filter _SYSTEMD_UNIT={{ unit }}
+    Read_From_Tail On
+{% endfor %}
+
+{% for unit in fluent_bit_extra_systemd_units %}
+[INPUT]
+    Name           systemd
+    Tag            systemd.{{ unit | regex_replace('\\.service$', '') }}
+    Systemd_Filter _SYSTEMD_UNIT={{ unit }}
+    Read_From_Tail On
+{% endfor %}
+
+{% for path in fluent_bit_tail_paths %}
+[INPUT]
+    Name           tail
+    Tag            file.{{ path | basename }}
+    Path           {{ path }}
+    Path_Key       filename
+    Refresh_Interval 5
+    Skip_Long_Lines  On
+    DB             {{ fluent_bit_data_dir }}/{{ path | basename }}.db
+{% endfor %}
+
+{% for item in fluent_bit_extra_tail_paths %}
+[INPUT]
+    Name           tail
+    Tag            {{ item.tag }}
+    Path           {{ item.path }}
+    Path_Key       filename
+    Refresh_Interval 5
+    Skip_Long_Lines  On
+    DB             /var/lib/fluent-bit/{{ item.tag }}.db
+{% if item.parser is defined %}
+    Parser         {{ item.parser }}
+{% endif %}
+{% endfor %}
+
+[FILTER]
+    Name           record_modifier
+    Match          *
+    Record         host {{ inventory_hostname }}
+
+[OUTPUT]
+    Name           loki
+    Match          *
+    Host           {{ fluent_bit_loki_host }}
+    Port           {{ fluent_bit_loki_port }}
+    Labels         job=fluent-bit, host={{ inventory_hostname }}
+    Label_keys     $tag
+    Auto_Kubernetes_Labels Off

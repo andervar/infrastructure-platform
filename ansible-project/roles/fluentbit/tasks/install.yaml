@@ -1,0 +1,21 @@
+---
+- name: Add Fluent Bit GPG key
+  ansible.builtin.rpm_key:
+    key: "{{ fluent_bit_repo_gpgkey }}"
+    state: present
+
+- name: Add Fluent Bit repository
+  ansible.builtin.yum_repository:
+    name: "{{ fluent_bit_repo_name }}"
+    description: "{{ fluent_bit_repo_description }}"
+    baseurl: "{{ fluent_bit_repo_baseurl }}"
+    enabled: true
+    gpgcheck: "{{ fluent_bit_repo_gpgcheck }}"
+    repo_gpgcheck: "{{ fluent_bit_repo_repo_gpgcheck }}"
+    gpgkey: "{{ fluent_bit_repo_gpgkey }}"
+
+- name: Install Fluent Bit package
+  ansible.builtin.dnf:
+    name: "{{ fluent_bit_package }}"
+    state: present
+    update_cache: true
